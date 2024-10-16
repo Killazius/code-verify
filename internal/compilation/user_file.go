@@ -3,7 +3,6 @@ package compilation
 import (
 	"fmt"
 	"os/exec"
-	"time"
 )
 
 func MakeFile(Link string, format string) error {

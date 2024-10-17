@@ -21,8 +21,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	compilation.MakeFile(userCode.Link, userCode.Lang)
-	//if userCode.Lang == "cpp" {
-	//	compilation.CompileCPP(userCode.Task_Name, "52")
-	//}
-	//fmt.Printf("Расшифровка: %+v\n", userCode.Link)
+	if userCode.Lang == "cpp" {
+		compilation.MakeCPPfile(userCode.Task_Name, "user.cpp")
+	}
 }

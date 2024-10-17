@@ -14,6 +14,6 @@ func MakeFile(Link string, format string) error {
 	if err != nil {
 		return fmt.Errorf("ошибка выполнения команды: %v", err)
 	}
-	fmt.Println("Файлик сделан с S3")
+	//fmt.Println("Файлик сделан с S3")
 	return nil
 }

@@ -4,11 +4,12 @@ import (
 	"compile-server/internal/compilation"
 	"compile-server/internal/models"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
 func CodeHandler(w http.ResponseWriter, r *http.Request) {
-
+	log.Println("new request")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

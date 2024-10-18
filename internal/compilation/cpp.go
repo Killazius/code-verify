@@ -37,7 +37,7 @@ func MakeCPPfile(taskName string, userFile string) {
 	}
 	err = TestCPPfile(taskName)
 	if err != nil {
-		log.Printf("Ошибка во время тестирования.")
+		log.Printf("Ошибка во время тестирования: %v", err)
 		return
 	}
 
@@ -67,11 +67,9 @@ func CompileCPPfile(outputFileExe string, outputFile string, TaskName string) er
 func TestCPPfile(TaskName string) error {
 	path := fmt.Sprintf("src/%v/test.go", TaskName)
 	cmd := exec.Command("go", "run", path)
+
 	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	err = cmd.Run()
+
 	if err != nil {
 		return err
 	}

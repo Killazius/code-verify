@@ -18,7 +18,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&userCode)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	err = compilation.MakeFile(userCode.Link, userCode.Lang)

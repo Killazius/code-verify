@@ -38,6 +38,8 @@ func MakeCPPfile(taskName string, userFile string) {
 		return
 	}
 	err = TestCPPfile(taskName)
+	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, outputFileExe)
+	os.Remove(outputFileExePath)
 	if err != nil {
 		log.Printf("Ошибка во время тестирования: %v", err)
 		return
@@ -93,6 +95,7 @@ func TestCPPfile(TaskName string) error {
 		}
 		log.Println("command finished successfully")
 	case <-ctx.Done():
+
 		if err := cmd.Process.Kill(); err != nil {
 			return fmt.Errorf("failed to kill process: %w", err)
 		}

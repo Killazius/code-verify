@@ -1,10 +1,12 @@
 package compilation
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"time"
 )
 
 func MakeCPPfile(taskName string, userFile string) {
@@ -66,13 +68,37 @@ func CompileCPPfile(outputFileExe string, outputFile string, TaskName string) er
 
 func TestCPPfile(TaskName string) error {
 	path := fmt.Sprintf("src/%v/test.go", TaskName)
-	cmd := exec.Command("go", "run", path)
 
-	output, err := cmd.CombinedOutput()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if err != nil {
-		return err
+	cmd := exec.CommandContext(ctx, "go", "run", path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start command: %w", err)
 	}
-	log.Println(string(output))
+
+	done := make(chan error)
+	go func() {
+		done <- cmd.Wait()
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			log.Printf("command finished with error: %v", err)
+			return fmt.Errorf("command finished with error: %w", err)
+		}
+		log.Println("command finished successfully")
+	case <-ctx.Done():
+		if err := cmd.Process.Kill(); err != nil {
+			return fmt.Errorf("failed to kill process: %w", err)
+		}
+		log.Println("command timed out")
+		return fmt.Errorf("command timed out")
+	}
+
 	return nil
 }

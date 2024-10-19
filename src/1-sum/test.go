@@ -60,6 +60,5 @@ func main() {
 		}
 	}
 	fmt.Println("Problem solved")
-	os.Remove(outputFileExe)
 	return
 }

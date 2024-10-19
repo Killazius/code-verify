@@ -25,8 +25,10 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-
-	if userCode.Lang == "cpp" {
-		compilation.MakeCPPfile(userCode.Task_Name, "user.cpp")
+	switch userCode.Lang {
+	case "cpp":
+		{
+			compilation.MakeCPPfile(userCode.Task_Name, "user.cpp")
+		}
 	}
 }

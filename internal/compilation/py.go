@@ -23,10 +23,15 @@ func MakePYfile(taskName string, userFile string) {
 		return
 	}
 
-	err = os.WriteFile(outputFile, append(baseContent, userContent...), 0644)
+	err = os.WriteFile(outputFile, append(userContent, baseContent...), 0644)
 	if err != nil {
 		log.Printf("Ошибка записи в файл %s: %v\n", outputFile, err)
 		return
+	}
+
+	err = os.Remove(userFile)
+	if err != nil {
+		log.Printf("Ошибка в удалении файла %s: %v\n", userFile, err)
 	}
 
 	//err = CompileCPPfile(userContent, outputFile, taskName)

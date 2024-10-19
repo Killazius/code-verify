@@ -26,7 +26,15 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userCode.Lang == "cpp" {
-		compilation.MakeCPPfile(userCode.TaskName, "user.cpp")
+	switch userCode.Lang {
+	case "cpp":
+		{
+			compilation.MakeCPPfile(userCode.TaskName, "user.cpp")
+		}
+	case "py":
+		{
+			compilation.MakePYfile(userCode.TaskName, "user.py")
+		}
 	}
+
 }

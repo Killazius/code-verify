@@ -9,6 +9,9 @@ import (
 func main() {
 	http.HandleFunc("/code", handlers.CodeHandler)
 	log.Println("Server start on port 1234")
-	http.ListenAndServe(":1234", nil)
+	err := http.ListenAndServe(":1234", nil)
+	if err != nil {
+		return
+	}
 
 }

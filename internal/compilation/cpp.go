@@ -1,126 +1,107 @@
 package compilation
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
-	"strings"
+	"time"
 )
 
 func MakeCPPfile(taskName string, userFile string) {
 	baseFile := fmt.Sprintf("src/%v/base.cpp", taskName)
-	//sumFile := "sum_cpp.txt"
 	outputFile := "solution.cpp"
 	outputFileExe := "solution.exe"
 
-	// Чтение содержимого base.cpp
-	baseContent, err := ioutil.ReadFile(baseFile)
+	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
-		fmt.Printf("Ошибка чтения файла %s: %v\n", baseFile, err)
+		log.Printf("Ошибка чтения файла %s: %v\n", baseFile, err)
 		return
 	}
 
-	// Чтение содержимого user.cpp
-	sumContent, err := ioutil.ReadFile(userFile)
+	sumContent, err := os.ReadFile(userFile)
 	if err != nil {
-		fmt.Printf("Ошибка чтения файла %s: %v\n", userFile, err)
+		log.Printf("Ошибка чтения файла %s: %v\n", userFile, err)
 		return
 	}
 
-	// Создание файла main.cpp
-	err = ioutil.WriteFile(outputFile, append(baseContent, sumContent...), 0644)
+	err = os.WriteFile(outputFile, append(baseContent, sumContent...), 0644)
 	if err != nil {
-		fmt.Printf("Ошибка записи в файл %s: %v\n", outputFile, err)
-		return
-	}
-	fmt.Printf("Файл %s успешно создан.\n", outputFile)
-
-	err = CompileCPPfile(outputFileExe, outputFile)
-	if err != nil {
-		log.Println("Файл не скомпилирован.")
+		log.Printf("Ошибка записи в файл %s: %v\n", outputFile, err)
 		return
 	}
 
-	err = TestCPPfile(outputFileExe, taskName)
+	err = CompileCPPfile(outputFileExe, outputFile, taskName)
 	if err != nil {
-		log.Println("Тесты не прошли")
+		log.Printf("Файл не скомпилирован.")
+		return
+	}
+	err = TestCPPfile(taskName)
+	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, outputFileExe)
+	os.Remove(outputFileExePath)
+	if err != nil {
+		log.Printf("Ошибка во время тестирования: %v", err)
 		return
 	}
 
 }
 
-func CompileCPPfile(outputFileExe string, outputFile string) error {
-	cmd := exec.Command("g++", "-o", outputFileExe, outputFile)
-
-	var out bytes.Buffer
-	cmd.Stdout = &out
+func CompileCPPfile(outputFileExe string, outputFile string, TaskName string) error {
+	path := fmt.Sprintf("src/%v/%v", TaskName, outputFileExe)
+	cmd := exec.Command("g++", "-o", path, outputFile)
 
 	err := cmd.Run()
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
-	os.Remove("user.cpp")
-	os.Remove("solution.cpp")
-	fmt.Printf("Файл %s успешно скомпилирован.\n", outputFileExe)
+	err = os.Remove("user.cpp")
+	if err != nil {
+		return err
+	}
+	err = os.Remove("solution.cpp")
+	if err != nil {
+		return err
+	}
 	return nil
 
 }
 
-func TestCPPfile(outputFileExe string, Task_Name string) error {
-	testsPath := fmt.Sprintf("src/%v/test.txt", Task_Name)
-	file, err := os.Open(testsPath)
-	if err != nil {
-		fmt.Println("Ошибка при открытии файла:", err)
-		return err
+func TestCPPfile(TaskName string) error {
+	path := fmt.Sprintf("src/%v/test.go", TaskName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "go", "run", path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start command: %w", err)
 	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	done := make(chan error)
+	go func() {
+		done <- cmd.Wait()
+	}()
 
-	var var1, var2 string
-	var var3 int
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		nums := strings.Fields(line)
-		if len(nums) == 3 {
-			var1 = nums[0]
-			var2 = nums[1]
-			var3, _ = strconv.Atoi(nums[2])
-			cmd := exec.Command("./"+outputFileExe, var1, var2)
-			var out bytes.Buffer
-			cmd.Stdout = &out
-			err := cmd.Run()
-			if err != nil {
-				log.Fatal(err)
-				return err
-			}
-			result := out.String()
-			cleanedResult := strings.ReplaceAll(result, "\r", "")
-			cleanedResult = strings.TrimSpace(cleanedResult)
-			resultInt, err := strconv.Atoi(cleanedResult)
-			if err != nil {
-				fmt.Printf("Ошибка при преобразовании строки '%s' в int: %v\n", cleanedResult, err)
-				return err
-			}
-			fmt.Printf("Вызывается тест. Данные: %d - %d\n", resultInt, var3)
-			if resultInt != var3 {
-				fmt.Println("Тест провален!")
-				return nil
-			}
-
-		} else {
-			fmt.Println("Неверный формат строки")
+	select {
+	case err := <-done:
+		if err != nil {
+			log.Printf("command finished with error: %v", err)
+			return fmt.Errorf("command finished with error: %w", err)
 		}
+		log.Println("command finished successfully")
+	case <-ctx.Done():
+
+		if err := cmd.Process.Kill(); err != nil {
+			return fmt.Errorf("failed to kill process: %w", err)
+		}
+		log.Println("command timed out")
+		return fmt.Errorf("command timed out")
 	}
-	fmt.Println("Задача решена верно!")
-	os.Remove(outputFileExe)
+
 	return nil
 }

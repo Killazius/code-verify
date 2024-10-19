@@ -18,7 +18,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&userCode)
 
 	if err != nil {
-		return
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	err = compilation.MakeFile(userCode.Link, userCode.Lang)
@@ -27,6 +27,6 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userCode.Lang == "cpp" {
-		compilation.MakeCPPfile(userCode.Task_Name, "user.cpp")
+		compilation.MakeCPPfile(userCode.TaskName, "user.cpp")
 	}
 }

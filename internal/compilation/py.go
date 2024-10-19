@@ -2,35 +2,42 @@ package compilation
 
 import (
 	"fmt"
-	"io/ioutil"
+	"log"
+	"os"
 )
 
-func compilePY() {
-	// Названия файлов
-	baseFile := "1-sum/base.py"
-	//sumFile := "sum_py.txt"
-	outputFile := "main.py"
+func MakePYfile(taskName string, userFile string) {
+	pathTask := fmt.Sprintf("src/%v", taskName)
+	baseFile := fmt.Sprintf("%v/base.py", pathTask)
+	outputFile := fmt.Sprintf("%v/solution.py", pathTask)
 
-	// Чтение содержимого base.py
-	baseContent, err := ioutil.ReadFile(baseFile)
+	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
-		fmt.Printf("Ошибка чтения файла %s: %v\n", baseFile, err)
+		log.Printf("Ошибка чтения файла %s: %v\n", baseFile, err)
 		return
 	}
 
-	// Чтение содержимого sum_py.txt
-	// sumContent, err := ioutil.ReadFile(sumFile)
-	// if err != nil {
-	// 	fmt.Printf("Ошибка чтения файла %s: %v\n", sumFile, err)
-	// 	return
-	// }
-
-	// Создание файла main.py
-	err = ioutil.WriteFile(outputFile, append(baseContent), 0644)
+	userContent, err := os.ReadFile(userFile)
 	if err != nil {
-		fmt.Printf("Ошибка записи в файл %s: %v\n", outputFile, err)
+		log.Printf("Ошибка чтения файла %s: %v\n", userFile, err)
 		return
 	}
 
-	fmt.Printf("Файл %s успешно создан.\n", outputFile)
+	err = os.WriteFile(outputFile, append(baseContent, userContent...), 0644)
+	if err != nil {
+		log.Printf("Ошибка записи в файл %s: %v\n", outputFile, err)
+		return
+	}
+
+	//err = CompileCPPfile(userContent, outputFile, taskName)
+	//if err != nil {
+	//	log.Printf("Файл не скомпилирован.")
+	//	return
+	//}
+	//err = TestCPPfile(taskName)
+	//if err != nil {
+	//	log.Printf("Ошибка во время тестирования: %v", err)
+	//	return
+	//}
+
 }

@@ -11,9 +11,10 @@ func MakeFile(Link string, format string) error {
 	cmd := exec.Command("aws", "s3", "cp")
 	cmd.Args = append(cmd.Args, endpoint, Link, fmt.Sprintf("user.%s", format))
 	err := cmd.Run()
+
 	if err != nil {
 		return fmt.Errorf("ошибка выполнения команды: %v", err)
 	}
-	fmt.Println("Файлик сделан с S3")
+
 	return nil
 }

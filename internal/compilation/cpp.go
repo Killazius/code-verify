@@ -69,7 +69,7 @@ func CompileCPPfile(outputFileExe string, outputFile string, TaskName string) er
 }
 
 func TestCPPfile(TaskName string) error {
-	path := fmt.Sprintf("src/%v/test.go", TaskName)
+	path := fmt.Sprintf("src/%v/test_cpp.go", TaskName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

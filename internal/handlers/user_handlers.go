@@ -36,7 +36,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	case "py":
 		{
-			compilation.MakePYfile(userCode.TaskName, "user.py")
+			compilation.MakePYfile(userCode.TaskName, userFile)
 		}
 	}
 

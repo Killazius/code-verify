@@ -12,8 +12,10 @@ import (
 )
 
 func main() {
-	solutionFile := "src/1-sum/solution.py"
-	file, err := os.Open("src/1-sum/test.txt")
+	path := "src/1-sum/"
+	testFile := "test.txt"
+	solutionFile := string(os.Args[1])
+	file, err := os.Open(fmt.Sprintf("%s%s", path, testFile))
 	if err != nil {
 		fmt.Println("Ошибка при открытии файла:", err)
 		return

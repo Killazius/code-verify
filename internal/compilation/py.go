@@ -10,9 +10,9 @@ import (
 )
 
 func MakePYfile(taskName string, userFile string) {
-	pathTask := fmt.Sprintf("src/%v", taskName)
-	baseFile := fmt.Sprintf("%v/base.py", pathTask)
-	outputFile := fmt.Sprintf("%v/solution.py", pathTask)
+	pathTask := fmt.Sprintf("src/%s", taskName)
+	baseFile := fmt.Sprintf("%s/base.py", pathTask)
+	outputFile := fmt.Sprintf("%s/%s", pathTask, userFile)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {

@@ -12,8 +12,12 @@ import (
 )
 
 func main() {
-	userFileExe := os.Args[1]
-	file, err := os.Open("src/1-sum/test.txt")
+	path := "src/1-sum/"
+	testFile := "test.txt"
+	userFileExe := string(os.Args[1])
+	userFileExe = fmt.Sprintf("%s%s", path, userFileExe)
+
+	file, err := os.Open(fmt.Sprintf("%s%s", path, testFile))
 	if err != nil {
 		fmt.Println("Ошибка при открытии файла:", err)
 		return

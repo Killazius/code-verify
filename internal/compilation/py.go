@@ -37,7 +37,7 @@ func MakePYfile(taskName string, userFile string) {
 		log.Printf("Ошибка в удалении файла %s: %v\n", userFile, err)
 	}
 
-	err = TestPYfile(taskName)
+	err = TestPYfile(taskName, outputFile)
 	outputFilePath := fmt.Sprint(outputFile)
 	os.Remove(outputFilePath)
 	if err != nil {
@@ -46,13 +46,13 @@ func MakePYfile(taskName string, userFile string) {
 	}
 }
 
-func TestPYfile(TaskName string) error {
+func TestPYfile(TaskName string, outputFile string) error {
 	path := fmt.Sprintf("src/%v/test_py.go", TaskName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "run", path)
+	cmd := exec.CommandContext(ctx, "go", "run", path, outputFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

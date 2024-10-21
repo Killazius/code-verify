@@ -6,75 +6,78 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
-func MakeCPPfile(taskName string, userFile string) {
+func MakeCPPfile(taskName string, userFile string) error {
 	baseFile := fmt.Sprintf("src/%v/base.cpp", taskName)
-	outputFile := "solution.cpp"
-	outputFileExe := "solution.exe"
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
 		log.Printf("Ошибка чтения файла %s: %v\n", baseFile, err)
-		return
+		return err
 	}
 
-	sumContent, err := os.ReadFile(userFile)
+	userContent, err := os.ReadFile(userFile)
 	if err != nil {
 		log.Printf("Ошибка чтения файла %s: %v\n", userFile, err)
-		return
+		return err
 	}
-
-	err = os.WriteFile(outputFile, append(baseContent, sumContent...), 0644)
+	err = os.Remove(userFile)
 	if err != nil {
-		log.Printf("Ошибка записи в файл %s: %v\n", outputFile, err)
-		return
+		return err
 	}
 
-	err = CompileCPPfile(outputFileExe, outputFile, taskName)
+	err = os.WriteFile(userFile, append(baseContent, userContent...), 0644)
+	if err != nil {
+		log.Printf("Ошибка записи в файл %s: %v\n", userFile, err)
+		return err
+	}
+
+	userFileExe, err := CompileCPPfile(userFile, taskName)
 	if err != nil {
 		log.Printf("Файл не скомпилирован.")
-		return
+		return err
 	}
-	err = TestCPPfile(taskName)
-	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, outputFileExe)
-	os.Remove(outputFileExePath)
+	err = TestCPPfile(userFileExe, taskName)
 	if err != nil {
 		log.Printf("Ошибка во время тестирования: %v", err)
-		return
-	}
-
-}
-
-func CompileCPPfile(outputFileExe string, outputFile string, TaskName string) error {
-	path := fmt.Sprintf("src/%v/%v", TaskName, outputFileExe)
-	cmd := exec.Command("g++", "-o", path, outputFile)
-
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
 		return err
 	}
-	err = os.Remove("user.cpp")
-	if err != nil {
-		return err
-	}
-	err = os.Remove("solution.cpp")
+	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, userFileExe)
+	err = os.Remove(outputFileExePath)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func CompileCPPfile(userFile string, TaskName string) (string, error) {
+	userFileExe := strings.Replace(userFile, ".cpp", ".exe", 1)
+	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
+	cmd := exec.Command("g++", "-o", path, userFile)
+
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+		return "", err
+	}
+	err = os.Remove(userFile)
+	if err != nil {
+		return "", err
+	}
+	return userFileExe, nil
 
 }
 
-func TestCPPfile(TaskName string) error {
+func TestCPPfile(userFile string, TaskName string) error {
 	path := fmt.Sprintf("src/%v/test_cpp.go", TaskName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "run", path)
+	cmd := exec.CommandContext(ctx, "go", "run", path, userFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

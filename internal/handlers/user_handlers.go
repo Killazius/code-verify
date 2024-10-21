@@ -21,7 +21,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = compilation.MakeFile(userCode.Link, userCode.Lang)
+	userFile, err := compilation.MakeFile(userCode.Path, userCode.Lang, userCode.UserName, userCode.TaskName)
 	if err != nil {
 		return
 	}
@@ -29,7 +29,10 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	switch userCode.Lang {
 	case "cpp":
 		{
-			compilation.MakeCPPfile(userCode.TaskName, "user.cpp")
+			err := compilation.MakeCPPfile(userCode.TaskName, userFile)
+			if err != nil {
+				return
+			}
 		}
 	case "py":
 		{

@@ -12,13 +12,18 @@ import (
 )
 
 func main() {
-	outputFileExe := "src/1-sum/solution.exe"
+	userFileExe := os.Args[1]
 	file, err := os.Open("src/1-sum/test.txt")
 	if err != nil {
 		fmt.Println("Ошибка при открытии файла:", err)
 		return
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
 
 	scanner := bufio.NewScanner(file)
 
@@ -34,7 +39,7 @@ func main() {
 			var1 = nums[0]
 			var2 = nums[1]
 			var3, _ = strconv.Atoi(nums[2])
-			cmd := exec.Command("./"+outputFileExe, var1, var2)
+			cmd := exec.Command("./"+userFileExe, var1, var2)
 			var out bytes.Buffer
 			cmd.Stdout = &out
 			err := cmd.Run()

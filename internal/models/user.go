@@ -1,7 +1,8 @@
 package models
 
 type Code struct {
-	Link     string `json:"link"`
+	Path     string `json:"path"`
 	Lang     string `json:"lang"`
-	TaskName string `json:"task_name"`
+	TaskName string `json:"taskname"`
+	UserName string `json:"username"`
 }

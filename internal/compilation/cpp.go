@@ -56,6 +56,10 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
+		err := os.Remove(userFile)
+		if err != nil {
+			return "", err
+		}
 		return "", err
 	}
 	err = os.Remove(userFile)

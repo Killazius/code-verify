@@ -34,7 +34,7 @@ func MakeCPPfile(taskName string, userFile string) error {
 	}
 
 	userFileExe, err := CompileCPPfile(userFile, taskName)
-	if err != nil {
+	if err != nil || userFileExe == "" {
 		return models.HandleCommonError(fmt.Errorf("файл не скомпилирован: %v", err))
 	}
 	err = TestCPPfile(userFileExe, taskName)

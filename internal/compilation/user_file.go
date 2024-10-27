@@ -5,8 +5,11 @@ import (
 	"os/exec"
 )
 
+const (
+	endpoint = "--endpoint-url=https://s3.ru-1.storage.selcloud.ru"
+)
+
 func MakeFile(path string, lang string, userName string, taskName string) (string, error) {
-	endpoint := "--endpoint-url=https://s3.ru-1.storage.selcloud.ru"
 
 	container := "s3://container-studying-2/"
 	container += path
@@ -17,7 +20,7 @@ func MakeFile(path string, lang string, userName string, taskName string) (strin
 	err := cmd.Run()
 
 	if err != nil {
-		return "", fmt.Errorf("ошибка выполнения команды: %v", err)
+		return "", fmt.Errorf("the file wasn't downloaded: %v", err)
 	}
 
 	return userFile, nil

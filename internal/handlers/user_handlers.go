@@ -9,20 +9,26 @@ import (
 )
 
 func CodeHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("new request")
+	log.Printf("%v %v", r.Method, r.URL)
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	var userCode models.Code
-	err := json.NewDecoder(r.Body).Decode(&userCode)
-
-	if err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	log.Printf("Received request for %s", userCode.Path)
+	if err := decoder.Decode(&userCode); err != nil {
+		log.Printf("Error decoding JSON: %v", err)
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
 	userFile, err := compilation.MakeFile(userCode.Path, userCode.Lang, userCode.UserName, userCode.TaskName)
 	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -31,12 +37,17 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			err := compilation.MakeCPPfile(userCode.TaskName, userFile)
 			if err != nil {
-				return
+				log.Println(err.Error())
+				http.Error(w, err.Error(), http.StatusBadRequest)
 			}
 		}
 	case "py":
 		{
-			compilation.MakePYfile(userCode.TaskName, userFile)
+			err := compilation.MakePYfile(userCode.TaskName, userFile)
+			if err != nil {
+				log.Println(err.Error())
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
 		}
 	}
 

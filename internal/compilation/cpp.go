@@ -1,6 +1,7 @@
 package compilation
 
 import (
+	"compile-server/internal/models"
 	"context"
 	"fmt"
 	"log"
@@ -15,40 +16,35 @@ func MakeCPPfile(taskName string, userFile string) error {
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
-		log.Printf("Ошибка чтения файла %s: %v\n", baseFile, err)
-		return err
+		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", baseFile, err))
 	}
 
 	userContent, err := os.ReadFile(userFile)
 	if err != nil {
-		log.Printf("Ошибка чтения файла %s: %v\n", userFile, err)
-		return err
+		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", userFile, err))
 	}
 	err = os.Remove(userFile)
 	if err != nil {
-		return err
+		return models.HandleCommonError(fmt.Errorf("ошибка при удалении временного файла: %v", err))
 	}
 
 	err = os.WriteFile(userFile, append(baseContent, userContent...), 0644)
 	if err != nil {
-		log.Printf("Ошибка записи в файл %s: %v\n", userFile, err)
-		return err
+		return models.HandleCommonError(fmt.Errorf("ошибка при записи в файл %s: %v", userFile, err))
 	}
 
 	userFileExe, err := CompileCPPfile(userFile, taskName)
-	if err != nil {
-		log.Printf("Файл не скомпилирован.")
-		return err
+	if err != nil || userFileExe == "" {
+		return models.HandleCommonError(fmt.Errorf("файл не скомпилирован: %v", err))
 	}
 	err = TestCPPfile(userFileExe, taskName)
 	if err != nil {
-		log.Printf("Ошибка во время тестирования: %v", err)
-		return err
+		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err))
 	}
 	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, userFileExe)
 	err = os.Remove(outputFileExePath)
 	if err != nil {
-		return err
+		return models.HandleCommonError(fmt.Errorf("ошибка при удалении исполняемого файла: %v", err))
 	}
 	return nil
 }
@@ -58,12 +54,15 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	cmd := exec.Command("g++", "-o", path, userFile)
 
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-		return "", err
+	err_cmd := cmd.Run()
+	if err_cmd != nil {
+		err := os.Remove(userFile)
+		if err != nil {
+			return "", err
+		}
+		return "", err_cmd
 	}
-	err = os.Remove(userFile)
+	err := os.Remove(userFile)
 	if err != nil {
 		return "", err
 	}
@@ -74,7 +73,7 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 func TestCPPfile(userFile string, TaskName string) error {
 	path := fmt.Sprintf("src/%v/test_cpp.go", TaskName)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, userFile)
@@ -82,7 +81,7 @@ func TestCPPfile(userFile string, TaskName string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start command: %w", err)
+		return err
 	}
 
 	done := make(chan error)
@@ -93,17 +92,15 @@ func TestCPPfile(userFile string, TaskName string) error {
 	select {
 	case err := <-done:
 		if err != nil {
-			log.Printf("command finished with error: %v", err)
-			return fmt.Errorf("command finished with error: %w", err)
+			return err
 		}
-		log.Println("command finished successfully")
+		log.Println("tests passed")
 	case <-ctx.Done():
 
 		if err := cmd.Process.Kill(); err != nil {
-			return fmt.Errorf("failed to kill process: %w", err)
+			return err
 		}
-		log.Println("command timed out")
-		return fmt.Errorf("command timed out")
+		log.Println("tests failed")
 	}
 
 	return nil

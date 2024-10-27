@@ -18,10 +18,10 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	var userCode models.Code
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&userCode)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	log.Printf("Received request for %s", userCode.Path)
+	if err := decoder.Decode(&userCode); err != nil {
+		log.Printf("Error decoding JSON: %v", err)
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 

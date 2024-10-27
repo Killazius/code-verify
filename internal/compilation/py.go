@@ -50,7 +50,7 @@ func MakePYfile(taskName string, userFile string) error {
 func TestPYfile(TaskName string, outputFile string) error {
 	path := fmt.Sprintf("src/%v/test_py.go", TaskName)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, outputFile)
@@ -71,12 +71,13 @@ func TestPYfile(TaskName string, outputFile string) error {
 		if err != nil {
 			return err
 		}
-		log.Println("тесты закончились")
+		log.Println("tests passed")
 	case <-ctx.Done():
 
 		if err := cmd.Process.Kill(); err != nil {
 			return err
 		}
+		log.Println("tests failed")
 	}
 
 	return nil

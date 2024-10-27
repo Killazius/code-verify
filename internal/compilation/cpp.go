@@ -73,7 +73,7 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 func TestCPPfile(userFile string, TaskName string) error {
 	path := fmt.Sprintf("src/%v/test_cpp.go", TaskName)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, userFile)
@@ -94,12 +94,13 @@ func TestCPPfile(userFile string, TaskName string) error {
 		if err != nil {
 			return err
 		}
-		log.Println("тесты закончились")
+		log.Println("tests passed")
 	case <-ctx.Done():
 
 		if err := cmd.Process.Kill(); err != nil {
 			return err
 		}
+		log.Println("tests failed")
 	}
 
 	return nil

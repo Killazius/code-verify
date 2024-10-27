@@ -54,15 +54,15 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	cmd := exec.Command("g++", "-o", path, userFile)
 
-	err := cmd.Run()
-	if err != nil {
+	err_cmd := cmd.Run()
+	if err_cmd != nil {
 		err := os.Remove(userFile)
 		if err != nil {
 			return "", err
 		}
-		return "", err
+		return "", err_cmd
 	}
-	err = os.Remove(userFile)
+	err := os.Remove(userFile)
 	if err != nil {
 		return "", err
 	}

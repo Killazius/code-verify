@@ -35,14 +35,13 @@ func MakePYfile(taskName string, userFile string) error {
 		return models.HandleCommonError(fmt.Errorf("ошибка в удалении файла %s: %v", userFile, err))
 	}
 
-	err = TestPYfile(taskName, outputFile)
-	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err))
-	}
-	outputFilePath := fmt.Sprint(outputFile)
-	err = os.Remove(outputFilePath)
-	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка в удалении файла %s: %v", outputFilePath, err))
+	err_cmd := TestPYfile(taskName, outputFile)
+	if err_cmd != nil {
+		err = os.Remove(outputFile)
+		if err != nil {
+			return models.HandleCommonError(fmt.Errorf("ошибка в удалении файла %s: %v", outputFile, err))
+		}
+		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err_cmd))
 	}
 	return nil
 }

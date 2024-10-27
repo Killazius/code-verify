@@ -20,12 +20,14 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&userCode)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	userFile, err := compilation.MakeFile(userCode.Path, userCode.Lang, userCode.UserName, userCode.TaskName)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -35,12 +37,17 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			err := compilation.MakeCPPfile(userCode.TaskName, userFile)
 			if err != nil {
+				log.Println(err.Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 			}
 		}
 	case "py":
 		{
-			compilation.MakePYfile(userCode.TaskName, userFile)
+			err := compilation.MakePYfile(userCode.TaskName, userFile)
+			if err != nil {
+				log.Println(err.Error())
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
 		}
 	}
 

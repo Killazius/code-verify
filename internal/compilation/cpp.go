@@ -1,6 +1,7 @@
 package compilation
 
 import (
+	"compile-server/internal/models"
 	"context"
 	"fmt"
 	"log"
@@ -10,59 +11,40 @@ import (
 	"time"
 )
 
-type CompilationError struct {
-	Msg    string
-	Reason error
-}
-
-func (e *CompilationError) Error() string {
-	return fmt.Sprintf("%s: %v", e.Msg, e.Reason)
-}
-
-func handleCommonError(err error) error {
-	if err != nil {
-		return &CompilationError{
-			Msg:    "Во время компиляции произошла ошибка.",
-			Reason: err,
-		}
-	}
-	return nil
-}
-
 func MakeCPPfile(taskName string, userFile string) error {
 	baseFile := fmt.Sprintf("src/%v/base.cpp", taskName)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", baseFile, err))
+		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", baseFile, err))
 	}
 
 	userContent, err := os.ReadFile(userFile)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", userFile, err))
+		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", userFile, err))
 	}
 	err = os.Remove(userFile)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("ошибка при удалении временного файла: %v", err))
+		return models.HandleCommonError(fmt.Errorf("ошибка при удалении временного файла: %v", err))
 	}
 
 	err = os.WriteFile(userFile, append(baseContent, userContent...), 0644)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("ошибка при записи в файл %s: %v", userFile, err))
+		return models.HandleCommonError(fmt.Errorf("ошибка при записи в файл %s: %v", userFile, err))
 	}
 
 	userFileExe, err := CompileCPPfile(userFile, taskName)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("файл не скомпилирован: %v", err))
+		return models.HandleCommonError(fmt.Errorf("файл не скомпилирован: %v", err))
 	}
 	err = TestCPPfile(userFileExe, taskName)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err))
+		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err))
 	}
 	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, userFileExe)
 	err = os.Remove(outputFileExePath)
 	if err != nil {
-		return handleCommonError(fmt.Errorf("ошибка при удалении исполняемого файла: %v", err))
+		return models.HandleCommonError(fmt.Errorf("ошибка при удалении исполняемого файла: %v", err))
 	}
 	return nil
 }
@@ -74,11 +56,11 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", handleCommonError(fmt.Errorf("ошибка компиляции: %v", err))
+		return "", models.HandleCommonError(fmt.Errorf("ошибка компиляции: %v", err))
 	}
 	err = os.Remove(userFile)
 	if err != nil {
-		return "", handleCommonError(fmt.Errorf("ошибка при удалении исходного файла: %v", err))
+		return "", models.HandleCommonError(fmt.Errorf("ошибка при удалении исходного файла: %v", err))
 	}
 	return userFileExe, nil
 
@@ -95,7 +77,7 @@ func TestCPPfile(userFile string, TaskName string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		return handleCommonError(fmt.Errorf("ошибка при запуске тестов: %v", err))
+		return models.HandleCommonError(fmt.Errorf("ошибка при запуске тестов: %v", err))
 	}
 
 	done := make(chan error)
@@ -106,15 +88,15 @@ func TestCPPfile(userFile string, TaskName string) error {
 	select {
 	case err := <-done:
 		if err != nil {
-			return handleCommonError(fmt.Errorf("тест закончился с ошибкой: %v", err))
+			return models.HandleCommonError(fmt.Errorf("тест закончился с ошибкой: %v", err))
 		}
-		log.Println("Задача решена верно")
+		log.Println("тесты закончились")
 	case <-ctx.Done():
 
 		if err := cmd.Process.Kill(); err != nil {
-			return handleCommonError(fmt.Errorf("невозможно удалить процесс: %v", err))
+			return models.HandleCommonError(fmt.Errorf("невозможно удалить процесс: %v", err))
 		}
-		return handleCommonError(fmt.Errorf("время на тестирование закончено. Задача не решена"))
+		return models.HandleCommonError(fmt.Errorf("время на тестирование закончено. Задача не решена"))
 	}
 
 	return nil

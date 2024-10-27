@@ -6,3 +6,8 @@ type Code struct {
 	TaskName string `json:"task_name"`
 	UserName string `json:"username"`
 }
+
+const (
+	LangCpp = "cpp"
+	LangPy  = "py"
+)

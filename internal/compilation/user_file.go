@@ -1,6 +1,7 @@
 package compilation
 
 import (
+	"compile-server/internal/models"
 	"fmt"
 	"os/exec"
 )
@@ -10,7 +11,9 @@ const (
 )
 
 func MakeFile(path string, lang string, userName string, taskName string) (string, error) {
-
+	if !isValidLang(lang) {
+		return "", fmt.Errorf("unsupported language")
+	}
 	container := "s3://container-studying-2/"
 	container += path
 
@@ -24,4 +27,13 @@ func MakeFile(path string, lang string, userName string, taskName string) (strin
 	}
 
 	return userFile, nil
+}
+
+func isValidLang(lang string) bool {
+	switch lang {
+	case models.LangCpp, models.LangPy:
+		return true
+	default:
+		return false
+	}
 }

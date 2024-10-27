@@ -96,7 +96,6 @@ func TestCPPfile(userFile string, TaskName string) error {
 		if err := cmd.Process.Kill(); err != nil {
 			return err
 		}
-		return err
 	}
 
 	return nil

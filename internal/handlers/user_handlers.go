@@ -4,6 +4,7 @@ import (
 	"compile-server/internal/compilation"
 	"compile-server/internal/models"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -49,6 +50,8 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 			}
 		}
+	default:
+		http.Error(w, fmt.Sprintf("Unsupported language: %s", userCode.Lang), http.StatusBadRequest)
 	}
 
 }

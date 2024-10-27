@@ -27,8 +27,8 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received request for %s", userCode.Path)
 
 	userFile, err := compilation.MakeFile(userCode.Path, userCode.Lang, userCode.UserName, userCode.TaskName)
-	if err != nil {
-		log.Println(err.Error())
+	if err != nil || userFile == "" {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

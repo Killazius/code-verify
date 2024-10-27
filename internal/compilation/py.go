@@ -58,7 +58,7 @@ func TestPYfile(TaskName string, outputFile string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка при запуске тестов: %v", err))
+		return err
 	}
 
 	done := make(chan error)
@@ -69,15 +69,14 @@ func TestPYfile(TaskName string, outputFile string) error {
 	select {
 	case err := <-done:
 		if err != nil {
-			return models.HandleCommonError(fmt.Errorf("тест закончился с ошибкой: %v", err))
+			return err
 		}
 		log.Println("тесты закончились")
 	case <-ctx.Done():
 
 		if err := cmd.Process.Kill(); err != nil {
-			return models.HandleCommonError(fmt.Errorf("невозможно удалить процесс: %v", err))
+			return err
 		}
-		return models.HandleCommonError(fmt.Errorf("время на тестирование закончено. Задача не решена"))
 	}
 
 	return nil

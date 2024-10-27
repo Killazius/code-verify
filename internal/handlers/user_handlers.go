@@ -9,20 +9,24 @@ import (
 )
 
 func CodeHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("new request")
+	log.Printf("%v %v", r.Method, r.URL)
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	var userCode models.Code
-	err := json.NewDecoder(r.Body).Decode(&userCode)
-
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&userCode)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	userFile, err := compilation.MakeFile(userCode.Path, userCode.Lang, userCode.UserName, userCode.TaskName)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -31,7 +35,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			err := compilation.MakeCPPfile(userCode.TaskName, userFile)
 			if err != nil {
-				return
+				http.Error(w, err.Error(), http.StatusBadRequest)
 			}
 		}
 	case "py":

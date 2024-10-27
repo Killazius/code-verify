@@ -15,16 +15,14 @@ func MakeFile(path string, lang string, userName string, taskName string) (strin
 	if err != nil {
 		return "", fmt.Errorf("error loading .env file")
 	}
-	container := config.GetContainer()
-	endpoint := config.GetEndpoint()
-	containerPath := fmt.Sprintf("%s/%s", container, path)
+	endpoint := fmt.Sprintf("--endpoint-url=https://%s", config.GetEndpoint())
+	container := fmt.Sprintf("s3://%s/%s", config.GetContainer(), path)
 
 	userFile := fmt.Sprintf("%s-%s.%s", taskName, userName, lang)
 
-	command := fmt.Sprintf("aws s3 cp --endpoint-url=https://%s s3://%s %s", endpoint, containerPath, userFile)
-	cmd := exec.Command(command)
+	cmd := exec.Command("aws", "s3", "cp")
+	cmd.Args = append(cmd.Args, endpoint, container, userFile)
 	err = cmd.Run()
-
 	if err != nil {
 		return "", fmt.Errorf("the file wasn't downloaded from S3 storage")
 	}

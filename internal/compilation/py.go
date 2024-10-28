@@ -11,9 +11,9 @@ import (
 )
 
 func MakePYfile(taskName string, userFile string) error {
-	pathTask := fmt.Sprintf("src/%s", taskName)
-	baseFile := fmt.Sprintf("%s/base.py", pathTask)
-	outputFile := fmt.Sprintf("%s/%s", pathTask, userFile)
+	pathTask := fmt.Sprintf("src/%v", taskName)
+	baseFile := fmt.Sprintf("%v/%v", pathTask, models.BasePy)
+	outputFile := fmt.Sprintf("%v/%v", pathTask, userFile)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
@@ -47,7 +47,7 @@ func MakePYfile(taskName string, userFile string) error {
 }
 
 func TestPYfile(TaskName string, outputFile string) error {
-	path := fmt.Sprintf("src/%v/test_py.go", TaskName)
+	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestPy)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -51,7 +51,7 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	default:
-		http.Error(w, fmt.Sprintf("Unsupported language: %s", userCode.Lang), http.StatusBadRequest)
+		http.Error(w, fmt.Sprint("Compilations have not started."), http.StatusBadRequest)
 	}
 
 }

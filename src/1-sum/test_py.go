@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"compile-server/internal/models"
 	"fmt"
 	"log"
 	"os"
@@ -13,9 +14,9 @@ import (
 
 func main() {
 	path := "src/1-sum/"
-	testFile := "test.txt"
+	testFile := models.TestsTxt
 	solutionFile := string(os.Args[1])
-	file, err := os.Open(fmt.Sprintf("%s%s", path, testFile))
+	file, err := os.Open(fmt.Sprintf("%v%v", path, testFile))
 	if err != nil {
 		fmt.Println("Ошибка при открытии файла:", err)
 		return

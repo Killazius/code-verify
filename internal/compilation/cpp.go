@@ -12,7 +12,7 @@ import (
 )
 
 func MakeCPPfile(taskName string, userFile string) error {
-	baseFile := fmt.Sprintf("src/%v/base.cpp", taskName)
+	baseFile := fmt.Sprintf("src/%v/%v", taskName, models.BaseCpp)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
@@ -71,7 +71,7 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 }
 
 func TestCPPfile(userFile string, TaskName string) error {
-	path := fmt.Sprintf("src/%v/test_cpp.go", TaskName)
+	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestCpp)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

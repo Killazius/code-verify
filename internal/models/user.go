@@ -11,3 +11,11 @@ const (
 	LangCpp = "cpp"
 	LangPy  = "py"
 )
+
+const (
+	BaseCpp  = "base.cpp"
+	BasePy   = "base.py"
+	TestsTxt = "test.txt"
+	TestCpp  = "test_cpp.go"
+	TestPy   = "test_py.go"
+)

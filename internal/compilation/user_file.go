@@ -1,20 +1,40 @@
 package compilation
 
 import (
+	"compile-server/config"
+	"compile-server/internal/models"
 	"fmt"
 	"os/exec"
 )
 
-func MakeFile(Link string, format string) error {
-
-	endpoint := "--endpoint-url=https://s3.ru-1.storage.selcloud.ru"
-	cmd := exec.Command("aws", "s3", "cp")
-	cmd.Args = append(cmd.Args, endpoint, Link, fmt.Sprintf("user.%s", format))
-	err := cmd.Run()
-
+func MakeFile(path string, lang string, userName string, taskName string) (string, error) {
+	if !isValidLang(lang) {
+		return "", fmt.Errorf("unsupported language")
+	}
+	err := config.LoadEnv()
 	if err != nil {
-		return fmt.Errorf("ошибка выполнения команды: %v", err)
+		return "", fmt.Errorf("error loading .env file")
+	}
+	endpoint := fmt.Sprintf("--endpoint-url=https://%v", config.GetEndpoint())
+	container := fmt.Sprintf("s3://%v/%v", config.GetContainer(), path)
+
+	userFile := fmt.Sprintf("%v-%v.%v", taskName, userName, lang)
+
+	cmd := exec.Command("aws", "s3", "cp")
+	cmd.Args = append(cmd.Args, endpoint, container, userFile)
+	err = cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("the file wasn't downloaded from S3 storage")
 	}
 
-	return nil
+	return userFile, nil
+}
+
+func isValidLang(lang string) bool {
+	switch lang {
+	case models.LangCpp, models.LangPy:
+		return true
+	default:
+		return false
+	}
 }

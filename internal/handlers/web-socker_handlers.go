@@ -56,14 +56,25 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		err = compilation.MakeCPPfile(userCode.TaskName, userFile)
-		if err != nil {
-			return
-		}
-
-		if err := conn.WriteMessage(messageType, message); err != nil {
-			log.Println(err)
-			break
+		switch userCode.Lang {
+		case "cpp":
+			{
+				err := compilation.MakeCPPfile(conn, userCode.TaskName, userFile)
+				if err != nil {
+					log.Println(err.Error())
+					http.Error(w, err.Error(), http.StatusBadRequest)
+				}
+			}
+		case "py":
+			{
+				err := compilation.MakePYfile(conn, userCode.TaskName, userFile)
+				if err != nil {
+					log.Println(err.Error())
+					http.Error(w, err.Error(), http.StatusBadRequest)
+				}
+			}
+		default:
+			http.Error(w, fmt.Sprint("Compilations have not started."), http.StatusBadRequest)
 		}
 
 	}

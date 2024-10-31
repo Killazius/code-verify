@@ -4,6 +4,7 @@ import (
 	"compile-server/internal/models"
 	"context"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"log"
 	"os"
 	"os/exec"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-func MakeCPPfile(taskName string, userFile string) error {
+func MakeCPPfile(conn *websocket.Conn, taskName string, userFile string) error {
 	baseFile := fmt.Sprintf("src/%v/%v", taskName, models.BaseCpp)
 
 	baseContent, err := os.ReadFile(baseFile)
@@ -39,8 +40,10 @@ func MakeCPPfile(taskName string, userFile string) error {
 	}
 	err = TestCPPfile(userFileExe, taskName)
 	if err != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err))
 	}
+	conn.WriteMessage(websocket.TextMessage, []byte("tests passed"))
 	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, userFileExe)
 	err = os.Remove(outputFileExePath)
 	if err != nil {

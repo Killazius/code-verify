@@ -4,13 +4,14 @@ import (
 	"compile-server/internal/models"
 	"context"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"log"
 	"os"
 	"os/exec"
 	"time"
 )
 
-func MakePYfile(taskName string, userFile string) error {
+func MakePYfile(conn *websocket.Conn, taskName string, userFile string) error {
 	pathTask := fmt.Sprintf("src/%v", taskName)
 	baseFile := fmt.Sprintf("%v/%v", pathTask, models.BasePy)
 	outputFile := fmt.Sprintf("%v/%v", pathTask, userFile)
@@ -41,8 +42,10 @@ func MakePYfile(taskName string, userFile string) error {
 		if err != nil {
 			return models.HandleCommonError(fmt.Errorf("ошибка в удалении файла %s: %v", outputFile, err))
 		}
+		conn.WriteMessage(websocket.TextMessage, []byte(err_cmd.Error()))
 		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err_cmd))
 	}
+	conn.WriteMessage(websocket.TextMessage, []byte("tests passed"))
 	return nil
 }
 

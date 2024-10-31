@@ -26,7 +26,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 	for {
-		messageType, message, err := conn.ReadMessage()
+		_, message, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			break

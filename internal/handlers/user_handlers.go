@@ -4,7 +4,6 @@ import (
 	"compile-server/internal/compilation"
 	"compile-server/internal/models"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -33,25 +32,25 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch userCode.Lang {
-	case "cpp":
-		{
-			err := compilation.MakeCPPfile(userCode.TaskName, userFile)
-			if err != nil {
-				log.Println(err.Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
-			}
-		}
-	case "py":
-		{
-			err := compilation.MakePYfile(userCode.TaskName, userFile)
-			if err != nil {
-				log.Println(err.Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
-			}
-		}
-	default:
-		http.Error(w, fmt.Sprint("Compilations have not started."), http.StatusBadRequest)
-	}
+	//switch userCode.Lang {
+	//case "cpp":
+	//	{
+	//		//err := compilation.MakeCPPfile(userCode.TaskName, userFile)
+	//		//if err != nil {
+	//		//	log.Println(err.Error())
+	//		//	http.Error(w, err.Error(), http.StatusBadRequest)
+	//		//}
+	//	}
+	//case "py":
+	//	{
+	//		//err := compilation.MakePYfile(userCode.TaskName, userFile)
+	//		//if err != nil {
+	//		//	log.Println(err.Error())
+	//		//	http.Error(w, err.Error(), http.StatusBadRequest)
+	//		//}
+	//	}
+	//default:
+	//	http.Error(w, fmt.Sprint("Compilations have not started."), http.StatusBadRequest)
+	//}
 
 }

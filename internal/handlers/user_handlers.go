@@ -24,9 +24,9 @@ func CodeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	log.Printf("Received request for %s", userCode.Path)
+	log.Printf("Received request for %s", userCode.Code)
 
-	userFile, err := compilation.MakeFile(userCode.Path, userCode.Lang, userCode.UserName, userCode.TaskName)
+	userFile, err := compilation.MakeFile(userCode.Code, userCode.Lang, userCode.UserName, userCode.TaskName)
 	if err != nil || userFile == "" {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)

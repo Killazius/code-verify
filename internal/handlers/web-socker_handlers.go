@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"compile-server/internal/compilation"
 	"compile-server/internal/models"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"os"
 )
 
 var upgrader = websocket.Upgrader{
@@ -38,6 +41,26 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Language: %s", userCode.Lang)
 		log.Printf("Task Name: %s", userCode.TaskName)
 		log.Printf("Username: %s", userCode.UserName)
+
+		userFile := fmt.Sprintf("%v-%v.%v", userCode.TaskName, userCode.UserName, userCode.Lang)
+		file, err := os.Create(userFile)
+		if err != nil {
+			log.Println("Error creating file:", err)
+			continue
+		}
+		defer file.Close()
+
+		_, err = file.WriteString(userCode.Code)
+		if err != nil {
+			log.Println("Error writing to file:", err)
+			continue
+		}
+
+		err = compilation.MakeCPPfile(userCode.TaskName, userFile)
+		if err != nil {
+			return
+		}
+
 		if err := conn.WriteMessage(messageType, message); err != nil {
 			log.Println(err)
 			break

@@ -4,52 +4,41 @@ import (
 	"compile-server/internal/models"
 	"context"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"log"
 	"os"
 	"os/exec"
 	"time"
 )
 
-func MakePYfile(conn *websocket.Conn, taskName string, userFile string) error {
+func MakePY(taskName string, userFile string) (string, error) {
 	pathTask := fmt.Sprintf("src/%v", taskName)
 	baseFile := fmt.Sprintf("%v/%v", pathTask, models.BasePy)
 	outputFile := fmt.Sprintf("%v/%v", pathTask, userFile)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", baseFile, err))
+		return "", fmt.Errorf("%s: %v", baseFile, err)
 	}
 
 	userContent, err := os.ReadFile(userFile)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", userFile, err))
+		return "", fmt.Errorf("%s: %v", userFile, err)
 	}
 
 	err = os.WriteFile(outputFile, append(userContent, baseContent...), 0644)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", outputFile, err))
+		return "", fmt.Errorf("%s: %v", outputFile, err)
 	}
 
 	err = os.Remove(userFile)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка в удалении файла %s: %v", userFile, err))
+		return "", fmt.Errorf("%s: %v", userFile, err)
 	}
 
-	err_cmd := TestPYfile(taskName, outputFile)
-	if err_cmd != nil {
-		err = os.Remove(outputFile)
-		if err != nil {
-			return models.HandleCommonError(fmt.Errorf("ошибка в удалении файла %s: %v", outputFile, err))
-		}
-		conn.WriteMessage(websocket.TextMessage, []byte(err_cmd.Error()))
-		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err_cmd))
-	}
-	conn.WriteMessage(websocket.TextMessage, []byte("tests passed"))
-	return nil
+	return outputFile, nil
 }
 
-func TestPYfile(TaskName string, outputFile string) error {
+func TestPY(TaskName string, outputFile string) error {
 	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestPy)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -73,14 +62,26 @@ func TestPYfile(TaskName string, outputFile string) error {
 		if err != nil {
 			return err
 		}
-		log.Println("tests passed")
 	case <-ctx.Done():
-
 		if err := cmd.Process.Kill(); err != nil {
 			return err
 		}
-		log.Println("tests failed")
 	}
 
+	return nil
+}
+func RunPY(userFile string, TaskName string) error {
+	outputFile, err := MakePY(TaskName, userFile)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	errCmd := TestPY(TaskName, outputFile)
+	if errCmd != nil {
+		err = os.Remove(outputFile)
+		if err != nil {
+			return fmt.Errorf("%s: %v", outputFile, err)
+		}
+		return errCmd
+	}
 	return nil
 }

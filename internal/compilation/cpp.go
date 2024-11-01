@@ -4,66 +4,48 @@ import (
 	"compile-server/internal/models"
 	"context"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 )
 
-func MakeCPPfile(conn *websocket.Conn, taskName string, userFile string) error {
+func BuildCPP(taskName string, userFile string) error {
 	baseFile := fmt.Sprintf("src/%v/%v", taskName, models.BaseCpp)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", baseFile, err))
+		return fmt.Errorf("%s: %v", baseFile, err)
 	}
 
 	userContent, err := os.ReadFile(userFile)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка чтения файла %s: %v", userFile, err))
+		return fmt.Errorf("%s: %v", userFile, err)
 	}
 	err = os.Remove(userFile)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка при удалении временного файла: %v", err))
+		return err
 	}
 
 	err = os.WriteFile(userFile, append(baseContent, userContent...), 0644)
 	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка при записи в файл %s: %v", userFile, err))
-	}
-
-	userFileExe, err := CompileCPPfile(userFile, taskName)
-	if err != nil || userFileExe == "" {
-		return models.HandleCommonError(fmt.Errorf("файл не скомпилирован: %v", err))
-	}
-	err = TestCPPfile(userFileExe, taskName)
-	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-		return models.HandleCommonError(fmt.Errorf("ошибка во время тестирования: %v", err))
-	}
-	conn.WriteMessage(websocket.TextMessage, []byte("tests passed"))
-	outputFileExePath := fmt.Sprintf("src/%v/%v", taskName, userFileExe)
-	err = os.Remove(outputFileExePath)
-	if err != nil {
-		return models.HandleCommonError(fmt.Errorf("ошибка при удалении исполняемого файла: %v", err))
+		return fmt.Errorf("%s: %v", userFile, err)
 	}
 	return nil
 }
 
-func CompileCPPfile(userFile string, TaskName string) (string, error) {
+func CompileCPP(userFile string, TaskName string) (string, error) {
 	userFileExe := strings.Replace(userFile, ".cpp", ".exe", 1)
 	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	cmd := exec.Command("g++", "-o", path, userFile)
 
-	err_cmd := cmd.Run()
-	if err_cmd != nil {
+	errCmd := cmd.Run()
+	if errCmd != nil {
 		err := os.Remove(userFile)
 		if err != nil {
 			return "", err
 		}
-		return "", err_cmd
+		return "", errCmd
 	}
 	err := os.Remove(userFile)
 	if err != nil {
@@ -73,7 +55,7 @@ func CompileCPPfile(userFile string, TaskName string) (string, error) {
 
 }
 
-func TestCPPfile(userFile string, TaskName string) error {
+func TestCPP(userFile string, TaskName string) error {
 	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestCpp)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -97,14 +79,32 @@ func TestCPPfile(userFile string, TaskName string) error {
 		if err != nil {
 			return err
 		}
-		log.Println("tests passed")
 	case <-ctx.Done():
-
 		if err := cmd.Process.Kill(); err != nil {
 			return err
 		}
-		log.Println("tests failed")
 	}
 
+	return nil
+}
+
+func RunCPP(userFile string, TaskName string) error {
+	err := BuildCPP(TaskName, userFile)
+	if err != nil {
+		return fmt.Errorf("file not build: %v", err)
+	}
+	userFileExe, err := CompileCPP(userFile, TaskName)
+	if err != nil || userFileExe == "" {
+		return fmt.Errorf("file not compile: %v", err)
+	}
+	err = TestCPP(userFileExe, TaskName)
+	if err != nil {
+		return fmt.Errorf("testing program: %v", err)
+	}
+	outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
+	err = os.Remove(outputFileExePath)
+	if err != nil {
+		return fmt.Errorf("deleting executable file: %v", err)
+	}
 	return nil
 }

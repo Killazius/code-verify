@@ -24,6 +24,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
+	log.Println("New connection from", r.RemoteAddr)
 	defer conn.Close()
 	for {
 		_, message, err := conn.ReadMessage()
@@ -51,6 +52,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		defer file.Close()
 
 		_, err = file.WriteString(userCode.Code)
+
 		if err != nil {
 			log.Println("Error writing to file:", err)
 			continue
@@ -59,23 +61,24 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		switch userCode.Lang {
 		case "cpp":
 			{
-				err := compilation.MakeCPPfile(conn, userCode.TaskName, userFile)
+				err = compilation.RunCPP(userFile, userCode.TaskName)
 				if err != nil {
-					log.Println(err.Error())
-					http.Error(w, err.Error(), http.StatusBadRequest)
+					log.Println("Error running CPP:", err)
 				}
 			}
 		case "py":
 			{
-				err := compilation.MakePYfile(conn, userCode.TaskName, userFile)
+				err = compilation.RunPY(userFile, userCode.TaskName)
 				if err != nil {
-					log.Println(err.Error())
-					http.Error(w, err.Error(), http.StatusBadRequest)
+					log.Println("Error running PY:", err)
 				}
 			}
 		default:
-			http.Error(w, fmt.Sprint("Compilations have not started."), http.StatusBadRequest)
+			err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", userCode.Lang)))
+			if err != nil {
+				return
+			}
 		}
-
+		break
 	}
 }

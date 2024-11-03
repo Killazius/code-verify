@@ -1,9 +1,11 @@
 package compilation
 
 import (
+	"bytes"
 	"compile-server/internal/models"
 	"context"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"os"
 	"os/exec"
 	"strings"
@@ -39,13 +41,13 @@ func CompileCPP(userFile string, TaskName string) (string, error) {
 	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	cmd := exec.Command("g++", "-o", path, userFile)
 
-	errCmd := cmd.Run()
+	output, errCmd := cmd.CombinedOutput()
 	if errCmd != nil {
-		err := os.Remove(userFile)
-		if err != nil {
-			return "", err
+		removeErr := os.Remove(userFile)
+		if removeErr != nil {
+			return "", removeErr
 		}
-		return "", errCmd
+		return "", fmt.Errorf("%s", output)
 	}
 	err := os.Remove(userFile)
 	if err != nil {
@@ -55,18 +57,19 @@ func CompileCPP(userFile string, TaskName string) (string, error) {
 
 }
 
-func TestCPP(userFile string, TaskName string) error {
+func TestCPP(userFile string, TaskName string) (string, error) {
 	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestCpp)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, userFile)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
-		return err
+		return "", err
 	}
 
 	done := make(chan error)
@@ -77,34 +80,46 @@ func TestCPP(userFile string, TaskName string) error {
 	select {
 	case err := <-done:
 		if err != nil {
-			return err
+			return fmt.Sprintf("Error: %vnOutput: %snErrors: %s", err, stdoutBuf.String(), stderrBuf.String()), nil
 		}
 	case <-ctx.Done():
 		if err := cmd.Process.Kill(); err != nil {
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return "", nil
 }
 
-func RunCPP(userFile string, TaskName string) error {
+func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 	err := BuildCPP(TaskName, userFile)
 	if err != nil {
-		return fmt.Errorf("file not build: %v", err)
+		conn.WriteJSON(models.Answer{
+			Stage:   "build",
+			Message: err.Error(),
+		})
+		return err
 	}
 	userFileExe, err := CompileCPP(userFile, TaskName)
-	if err != nil || userFileExe == "" {
-		return fmt.Errorf("file not compile: %v", err)
+	if err != nil && userFileExe == "" {
+		conn.WriteJSON(models.Answer{
+			Stage:   "compile",
+			Message: err.Error(),
+		})
+		return err
 	}
-	err = TestCPP(userFileExe, TaskName)
+	output, err := TestCPP(userFileExe, TaskName)
 	if err != nil {
-		return fmt.Errorf("testing program: %v", err)
+		return err
 	}
 	outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	err = os.Remove(outputFileExePath)
 	if err != nil {
-		return fmt.Errorf("deleting executable file: %v", err)
+		return err
 	}
+	conn.WriteJSON(models.Answer{
+		Stage:   "test",
+		Message: output,
+	})
 	return nil
 }

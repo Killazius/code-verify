@@ -1,10 +1,15 @@
 package models
 
-type Code struct {
+type UserJson struct {
 	Code     string `json:"code"`
 	Lang     string `json:"lang"`
 	TaskName string `json:"task_name"`
 	UserName string `json:"username"`
+}
+
+type Answer struct {
+	Stage   string `json:"stage"`
+	Message string `json:"message"`
 }
 
 const (

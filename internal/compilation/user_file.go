@@ -4,6 +4,7 @@ import (
 	"compile-server/config"
 	"compile-server/internal/models"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -37,4 +38,27 @@ func isValidLang(lang string) bool {
 	default:
 		return false
 	}
+}
+
+func CreateFile(filePath string, code string, lang string) error {
+	if !isValidLang(lang) {
+		return fmt.Errorf("unsupported language")
+	}
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
+
+	_, err = file.WriteString(code)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

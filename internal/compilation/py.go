@@ -1,10 +1,11 @@
 package compilation
 
 import (
+	"bytes"
 	"compile-server/internal/models"
 	"context"
 	"fmt"
-	"log"
+	"github.com/gorilla/websocket"
 	"os"
 	"os/exec"
 	"time"
@@ -38,18 +39,19 @@ func MakePY(taskName string, userFile string) (string, error) {
 	return outputFile, nil
 }
 
-func TestPY(TaskName string, outputFile string) error {
+func TestPY(TaskName string, outputFile string) (string, error) {
 	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestPy)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, outputFile)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
-		return err
+		return "", err
 	}
 
 	done := make(chan error)
@@ -60,22 +62,26 @@ func TestPY(TaskName string, outputFile string) error {
 	select {
 	case err := <-done:
 		if err != nil {
-			return err
+			return fmt.Sprintf("Error: %vnOutput: %snErrors: %s", err, stdoutBuf.String(), stderrBuf.String()), nil
 		}
 	case <-ctx.Done():
 		if err := cmd.Process.Kill(); err != nil {
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return "", nil
 }
-func RunPY(userFile string, TaskName string) error {
+func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 	outputFile, err := MakePY(TaskName, userFile)
-	if err != nil {
-		log.Println(err.Error())
+	if err != nil && outputFile == "" {
+		conn.WriteJSON(models.Answer{
+			Stage:   "build",
+			Message: err.Error(),
+		})
+		return err
 	}
-	errCmd := TestPY(TaskName, outputFile)
+	output, errCmd := TestPY(TaskName, outputFile)
 	if errCmd != nil {
 		err = os.Remove(outputFile)
 		if err != nil {
@@ -83,5 +89,9 @@ func RunPY(userFile string, TaskName string) error {
 		}
 		return errCmd
 	}
+	conn.WriteJSON(models.Answer{
+		Stage:   "test",
+		Message: output,
+	})
 	return nil
 }

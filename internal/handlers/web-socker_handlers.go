@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"os"
 )
 
 var upgrader = websocket.Upgrader{
@@ -25,56 +24,48 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 	log.Println("New connection from", r.RemoteAddr)
-	defer conn.Close()
+	defer func(conn *websocket.Conn) {
+		err := conn.Close()
+		if err != nil {
+			log.Println("connection close error:", err)
+		}
+	}(conn)
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			break
 		}
-		log.Printf("Received: %s", message)
-		var userCode models.Code
-		if err := json.Unmarshal(message, &userCode); err != nil {
+		var user models.UserJson
+		if err := json.Unmarshal(message, &user); err != nil {
 			log.Println("Error decoding JSON:", err)
-			continue
+			break
 		}
-		log.Printf("Received code: %s", userCode.Code)
-		log.Printf("Language: %s", userCode.Lang)
-		log.Printf("Task Name: %s", userCode.TaskName)
-		log.Printf("Username: %s", userCode.UserName)
 
-		userFile := fmt.Sprintf("%v-%v.%v", userCode.TaskName, userCode.UserName, userCode.Lang)
-		file, err := os.Create(userFile)
+		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, user.UserName, user.Lang)
+		err = compilation.CreateFile(userFile, user.Code, user.Lang)
 		if err != nil {
-			log.Println("Error creating file:", err)
-			continue
-		}
-		defer file.Close()
-
-		_, err = file.WriteString(userCode.Code)
-
-		if err != nil {
-			log.Println("Error writing to file:", err)
-			continue
+			log.Println(err)
+			break
 		}
 
-		switch userCode.Lang {
+		switch user.Lang {
 		case "cpp":
 			{
-				err = compilation.RunCPP(userFile, userCode.TaskName)
+				err = compilation.RunCPP(conn, userFile, user.TaskName)
 				if err != nil {
-					log.Println("Error running CPP:", err)
+					log.Println(err)
 				}
 			}
 		case "py":
 			{
-				err = compilation.RunPY(userFile, userCode.TaskName)
+				err = compilation.RunPY(conn, userFile, user.TaskName)
 				if err != nil {
-					log.Println("Error running PY:", err)
+					log.Println(err)
 				}
 			}
 		default:
-			err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", userCode.Lang)))
+			err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", user.Lang)))
 			if err != nil {
 				return
 			}

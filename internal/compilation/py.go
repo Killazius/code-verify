@@ -69,9 +69,8 @@ func TestPY(TaskName string, outputFile string) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err
 		}
+		return "", fmt.Errorf("%s", stderrBuf.String())
 	}
-
-	return "", nil
 }
 func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 	outputFile, err := MakePY(TaskName, userFile)

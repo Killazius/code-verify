@@ -87,9 +87,9 @@ func TestCPP(userFile string, TaskName string) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err
 		}
+		return "", fmt.Errorf("%s", stderrBuf.String())
 	}
 
-	return "", nil
 }
 
 func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {

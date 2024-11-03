@@ -62,8 +62,9 @@ func TestPY(TaskName string, outputFile string) (string, error) {
 	select {
 	case err := <-done:
 		if err != nil {
-			return fmt.Sprintf("Error: %vnOutput: %snErrors: %s", err, stdoutBuf.String(), stderrBuf.String()), nil
+			return "", err
 		}
+		return stdoutBuf.String(), nil
 	case <-ctx.Done():
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err

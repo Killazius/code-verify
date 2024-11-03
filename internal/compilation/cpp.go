@@ -140,10 +140,6 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 	if err != nil {
 		return err
 	}
-	conn.WriteJSON(models.Answer{
-		Stage:   models.Test,
-		Message: output,
-	})
 	log.Printf("test result: %s", output)
 	return nil
 }

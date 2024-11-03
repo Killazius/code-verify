@@ -85,10 +85,10 @@ func TestCPP(userFile string, TaskName string) (string, error) {
 		return stdoutBuf.String(), nil
 	case <-ctx.Done():
 		if err := cmd.Process.Kill(); err != nil {
-			return "", fmt.Errorf("%s", stderrBuf.String())
+			return "", err
 		}
+		return "timeout", nil
 	}
-	return "", nil
 }
 
 func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {

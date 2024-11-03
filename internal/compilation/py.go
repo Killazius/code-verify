@@ -67,10 +67,10 @@ func TestPY(TaskName string, outputFile string) (string, error) {
 		return stdoutBuf.String(), nil
 	case <-ctx.Done():
 		if err := cmd.Process.Kill(); err != nil {
-			return "", fmt.Errorf("%s", stderrBuf.String())
+			return "", err
 		}
+		return "timeout", nil
 	}
-	return "", nil
 }
 func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 	outputFile, err := MakePY(TaskName, userFile)

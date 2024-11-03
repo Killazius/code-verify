@@ -121,10 +121,19 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 			Message: models.Success,
 		})
 	}
-	output, err := TestCPP(userFileExe, TaskName)
-	if err != nil {
-		log.Printf("test stage failed: %s", err.Error())
-		return err
+	output, errCmd := TestCPP(userFileExe, TaskName)
+	if errCmd != nil {
+		log.Printf("test stage failed: %s", errCmd.Error())
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Test,
+			Message: errCmd.Error(),
+		})
+		return errCmd
+	} else {
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Test,
+			Message: output,
+		})
 	}
 	outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	err = os.Remove(outputFileExePath)

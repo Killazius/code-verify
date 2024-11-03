@@ -95,12 +95,17 @@ func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 			return fmt.Errorf("%s: %v", outputFile, err)
 		}
 		log.Printf("test stage failed: %s", errCmd.Error())
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Test,
+			Message: errCmd.Error(),
+		})
 		return errCmd
+	} else {
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Test,
+			Message: output,
+		})
 	}
-	conn.WriteJSON(models.Answer{
-		Stage:   models.Test,
-		Message: output,
-	})
 	log.Printf("test result: %s", output)
 	return nil
 }

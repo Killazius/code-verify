@@ -7,11 +7,6 @@ type UserJson struct {
 	UserName string `json:"username"`
 }
 
-type Answer struct {
-	Stage   string `json:"stage"`
-	Message string `json:"message"`
-}
-
 const (
 	LangCpp = "cpp"
 	LangPy  = "py"

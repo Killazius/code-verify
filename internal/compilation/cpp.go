@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -87,7 +88,7 @@ func TestCPP(userFile string, TaskName string) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err
 		}
-		return "timeout", nil
+		return models.Timeout, nil
 	}
 }
 
@@ -95,21 +96,34 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 	err := BuildCPP(TaskName, userFile)
 	if err != nil {
 		conn.WriteJSON(models.Answer{
-			Stage:   "build",
+			Stage:   models.Build,
 			Message: err.Error(),
 		})
+		log.Printf("build stage failed: %s", err.Error())
 		return err
+	} else {
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Build,
+			Message: models.Success,
+		})
 	}
 	userFileExe, err := CompileCPP(userFile, TaskName)
 	if err != nil && userFileExe == "" {
 		conn.WriteJSON(models.Answer{
-			Stage:   "compile",
+			Stage:   models.Compile,
 			Message: err.Error(),
 		})
+		log.Printf("compile stage failed: %s", err.Error())
 		return err
+	} else {
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Compile,
+			Message: models.Success,
+		})
 	}
 	output, err := TestCPP(userFileExe, TaskName)
 	if err != nil {
+		log.Printf("test stage failed: %s", err.Error())
 		return err
 	}
 	outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
@@ -118,8 +132,9 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 		return err
 	}
 	conn.WriteJSON(models.Answer{
-		Stage:   "test",
+		Stage:   models.Test,
 		Message: output,
 	})
+	log.Printf("test result: %s", output)
 	return nil
 }

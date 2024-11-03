@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"log"
 	"os"
 	"os/exec"
 	"time"
@@ -69,17 +70,23 @@ func TestPY(TaskName string, outputFile string) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err
 		}
-		return "timeout", nil
+		return models.Timeout, nil
 	}
 }
 func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 	outputFile, err := MakePY(TaskName, userFile)
 	if err != nil && outputFile == "" {
 		conn.WriteJSON(models.Answer{
-			Stage:   "build",
+			Stage:   models.Build,
 			Message: err.Error(),
 		})
+		log.Printf("build stage failed: %s", err.Error())
 		return err
+	} else {
+		conn.WriteJSON(models.Answer{
+			Stage:   models.Build,
+			Message: models.Success,
+		})
 	}
 	output, errCmd := TestPY(TaskName, outputFile)
 	if errCmd != nil {
@@ -87,11 +94,13 @@ func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 		if err != nil {
 			return fmt.Errorf("%s: %v", outputFile, err)
 		}
+		log.Printf("test stage failed: %s", errCmd.Error())
 		return errCmd
 	}
 	conn.WriteJSON(models.Answer{
-		Stage:   "test",
+		Stage:   models.Test,
 		Message: output,
 	})
+	log.Printf("test result: %s", output)
 	return nil
 }

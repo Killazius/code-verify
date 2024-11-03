@@ -46,7 +46,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		err = compilation.CreateFile(userFile, user.Code, user.Lang)
 		if err != nil {
 			log.Println(err)
-			break
+			continue
 		}
 
 		switch user.Lang {

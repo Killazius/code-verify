@@ -54,14 +54,14 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			{
 				err = compilation.RunCPP(conn, userFile, user.TaskName)
 				if err != nil {
-					log.Println(err)
+					break
 				}
 			}
 		case "py":
 			{
 				err = compilation.RunPY(conn, userFile, user.TaskName)
 				if err != nil {
-					log.Println(err)
+					break
 				}
 			}
 		default:

@@ -37,7 +37,7 @@ func main() {
 			var1 = nums[0]
 			var2 = nums[1]
 			var3, _ = strconv.Atoi(nums[2])
-			cmd := exec.Command("python", solutionFile, var1, var2)
+			cmd := exec.Command("python3", solutionFile, var1, var2)
 			var out bytes.Buffer
 			cmd.Stdout = &out
 			err := cmd.Run()

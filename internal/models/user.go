@@ -4,7 +4,11 @@ type UserJson struct {
 	Code     string `json:"code"`
 	Lang     string `json:"lang"`
 	TaskName string `json:"task_name"`
-	UserName string `json:"username"`
+	Token    string `json:"token"`
+}
+
+type Response struct {
+	Username string `json:"username"`
 }
 
 const (

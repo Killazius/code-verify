@@ -42,7 +42,17 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, user.UserName, user.Lang)
+		userName, status := compilation.GetName(user.Token)
+		response, _ := json.Marshal(models.TokenAnswer{Status: status})
+		err = conn.WriteMessage(websocket.TextMessage, response)
+		if err != nil {
+			return
+		}
+		if status != http.StatusOK {
+			break
+		}
+
+		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
 		err = compilation.CreateFile(userFile, user.Code, user.Lang)
 		if err != nil {
 			log.Println(err)

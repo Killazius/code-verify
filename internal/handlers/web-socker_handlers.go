@@ -30,6 +30,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			log.Println("connection close error:", err)
 		}
 	}(conn)
+	defer log.Printf("Connection closed from %s", r.RemoteAddr)
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -43,12 +44,14 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		userName, status := compilation.GetName(user.Token)
-		response, _ := json.Marshal(models.TokenAnswer{Status: status})
-		err = conn.WriteMessage(websocket.TextMessage, response)
+		err = conn.WriteJSON(models.TokenAnswer{
+			Status: status},
+		)
 		if err != nil {
 			return
 		}
 		if status != http.StatusOK {
+			log.Println("token is invalid")
 			break
 		}
 

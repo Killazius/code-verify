@@ -62,6 +62,6 @@ func main() {
 			fmt.Println("Неверный формат строки")
 		}
 	}
-	fmt.Println("Problem solved")
+	fmt.Println("success")
 	return
 }

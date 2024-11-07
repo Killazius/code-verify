@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/code", handlers.CodeHandler)
+	http.HandleFunc("/ws", handlers.HandleConnection)
 	log.Println("Server start on port 1234")
 	err := http.ListenAndServe(":1234", nil)
 	if err != nil {

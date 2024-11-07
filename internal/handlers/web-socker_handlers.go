@@ -30,6 +30,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			log.Println("connection close error:", err)
 		}
 	}(conn)
+	defer log.Printf("Connection closed from %s", r.RemoteAddr)
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -42,7 +43,19 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, user.UserName, user.Lang)
+		userName, status := compilation.GetName(user.Token)
+		err = conn.WriteJSON(models.TokenAnswer{
+			Status: status},
+		)
+		if err != nil {
+			return
+		}
+		if status != http.StatusOK {
+			log.Println("token is invalid")
+			break
+		}
+
+		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
 		err = compilation.CreateFile(userFile, user.Code, user.Lang)
 		if err != nil {
 			log.Println(err)

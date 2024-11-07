@@ -3,7 +3,10 @@ package compilation
 import (
 	"compile-server/config"
 	"compile-server/internal/models"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 )
@@ -38,6 +41,24 @@ func isValidLang(lang string) bool {
 	default:
 		return false
 	}
+}
+func GetName(token string) (string, int) {
+	url := fmt.Sprintf("http://45.82.153.53:8000/code/auth/%s/", token)
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return "", http.StatusBadRequest
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", http.StatusInternalServerError
+	}
+	var response models.Response
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return "", http.StatusInternalServerError
+	}
+	return response.Username, http.StatusOK
 }
 
 func CreateFile(filePath string, code string, lang string) error {

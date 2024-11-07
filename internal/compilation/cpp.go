@@ -122,6 +122,7 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 		})
 	}
 	output, errCmd := TestCPP(userFileExe, TaskName)
+	output = strings.ReplaceAll(output, "\n", "")
 	if errCmd != nil {
 		log.Printf("test stage failed: %s", errCmd.Error())
 		conn.WriteJSON(models.Answer{

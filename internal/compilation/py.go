@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -89,6 +90,7 @@ func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
 		})
 	}
 	output, errCmd := TestPY(TaskName, outputFile)
+	output = strings.ReplaceAll(output, "\n", "")
 	if errCmd != nil {
 		err = os.Remove(outputFile)
 		if err != nil {

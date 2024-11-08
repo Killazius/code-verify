@@ -8,8 +8,8 @@ import (
 
 func main() {
 	http.HandleFunc("/ws", handlers.HandleConnection)
-	log.Println("Server start on port 1235")
-	err := http.ListenAndServe(":1235", nil)
+	log.Println("Server start on port 1234")
+	err := http.ListenAndServe(":1234", nil)
 	if err != nil {
 		return
 	}

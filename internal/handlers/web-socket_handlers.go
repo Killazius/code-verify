@@ -42,7 +42,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error decoding JSON:", err)
 			break
 		}
-
+		log.Println(user)
 		userName, status := compilation.GetName(user.Token)
 		err = conn.WriteJSON(models.TokenAnswer{
 			Status: status},

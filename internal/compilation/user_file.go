@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -45,7 +46,8 @@ func isValidLang(lang string) bool {
 func GetName(token string) (string, int) {
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
 	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	log.Println(resp.StatusCode, token)
+	if err != nil {
 		return "", http.StatusBadRequest
 	}
 	defer resp.Body.Close()

@@ -44,10 +44,10 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println(user)
 		userName, status := compilation.GetName(user.Token)
-		err = conn.WriteJSON(models.TokenAnswer{
+		errConn := conn.WriteJSON(models.TokenAnswer{
 			Status: status},
 		)
-		if err != nil {
+		if errConn != nil {
 			return
 		}
 		if status != http.StatusOK {

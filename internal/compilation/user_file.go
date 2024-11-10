@@ -47,10 +47,15 @@ func GetName(token string) (string, int) {
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
 	resp, err := http.Get(url)
 	log.Println(resp.StatusCode, token)
-	if err != nil {
+	if err != nil || resp.StatusCode != http.StatusOK {
 		return "", http.StatusBadRequest
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", http.StatusInternalServerError

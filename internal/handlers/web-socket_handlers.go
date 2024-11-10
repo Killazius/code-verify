@@ -42,7 +42,6 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error decoding JSON:", err)
 			break
 		}
-		log.Println(user)
 		userName, status := compilation.GetName(user.Token)
 		errConn := conn.WriteJSON(models.TokenAnswer{
 			Status: status},
@@ -54,6 +53,8 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			log.Println("token is invalid")
 			break
 		}
+		log.Printf("%v | %v | %v", userName, user.TaskName, user.Lang)
+		log.Println(user.Code)
 
 		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
 		err = compilation.CreateFile(userFile, user.Code, user.Lang)

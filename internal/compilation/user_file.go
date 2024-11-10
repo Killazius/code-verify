@@ -54,26 +54,24 @@ func GetName(token string) (string, int) {
 
 	resp, err := client.Get(url)
 	if err != nil {
-		log.Println("Ошибка при выполнении GET запроса:", err)
+		log.Println("get request failed:", err)
 		return "", http.StatusBadRequest
 	}
 	defer resp.Body.Close()
 
-	log.Println("Статус ответа:", resp.StatusCode, "Токен:", token)
 	if resp.StatusCode != http.StatusOK {
+		log.Println("status code != 200:", resp.StatusCode)
 		return "", http.StatusBadRequest
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("Ошибка при чтении тела ответа:", err)
 		return "", http.StatusInternalServerError
 	}
 
 	var response models.Response
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Println("Ошибка при декодировании JSON:", err)
 		return "", http.StatusInternalServerError
 	}
 

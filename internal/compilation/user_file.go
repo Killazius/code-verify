@@ -3,6 +3,7 @@ package compilation
 import (
 	"compile-server/config"
 	"compile-server/internal/models"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -45,7 +46,13 @@ func isValidLang(lang string) bool {
 }
 func GetName(token string) (string, int) {
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
-	resp, err := http.Get(url)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	resp, err := client.Get(url)
 	if err != nil {
 		log.Println("Ошибка при выполнении GET запроса:", err)
 		return "", http.StatusBadRequest

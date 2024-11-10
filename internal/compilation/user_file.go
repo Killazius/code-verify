@@ -46,25 +46,30 @@ func isValidLang(lang string) bool {
 func GetName(token string) (string, int) {
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
 	resp, err := http.Get(url)
-	log.Println(resp.StatusCode, token)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil {
+		log.Println("Ошибка при выполнении GET запроса:", err)
 		return "", http.StatusBadRequest
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
-		}
-	}(resp.Body)
+	defer resp.Body.Close()
+
+	log.Println("Статус ответа:", resp.StatusCode, "Токен:", token)
+	if resp.StatusCode != http.StatusOK {
+		return "", http.StatusBadRequest
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Println("Ошибка при чтении тела ответа:", err)
 		return "", http.StatusInternalServerError
 	}
+
 	var response models.Response
 	err = json.Unmarshal(body, &response)
 	if err != nil {
+		log.Println("Ошибка при декодировании JSON:", err)
 		return "", http.StatusInternalServerError
 	}
+
 	return response.Username, http.StatusOK
 }
 

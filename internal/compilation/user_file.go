@@ -43,7 +43,7 @@ func isValidLang(lang string) bool {
 	}
 }
 func GetName(token string) (string, int) {
-	url := fmt.Sprintf("http://45.82.153.53:8000/code/auth/%s/", token)
+	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
 	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return "", http.StatusBadRequest

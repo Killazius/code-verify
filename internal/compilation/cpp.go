@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -99,7 +98,7 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 			Stage:   models.Build,
 			Message: err.Error(),
 		})
-		log.Printf("build stage failed: %s", err.Error())
+		//log.Printf("build stage failed: %s", err.Error())
 		return err
 	} else {
 		conn.WriteJSON(models.Answer{
@@ -113,7 +112,7 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 			Stage:   models.Compile,
 			Message: err.Error(),
 		})
-		log.Printf("compile stage failed: %s", err.Error())
+		//log.Printf("compile stage failed: %s", err.Error())
 		return err
 	} else {
 		conn.WriteJSON(models.Answer{
@@ -124,7 +123,7 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 	output, errCmd := TestCPP(userFileExe, TaskName)
 	output = strings.ReplaceAll(output, "\n", "")
 	if errCmd != nil {
-		log.Printf("test stage failed: %s", errCmd.Error())
+		//log.Printf("test stage failed: %s", errCmd.Error())
 		conn.WriteJSON(models.Answer{
 			Stage:   models.Test,
 			Message: errCmd.Error(),
@@ -141,6 +140,6 @@ func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("test result: %s", output)
+	//log.Printf("test result: %s", output)
 	return nil
 }

@@ -1,11 +1,11 @@
 package compilation
 
 import (
-	"compile-server/config"
 	"compile-server/internal/models"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
@@ -17,12 +17,12 @@ func MakeFile(path string, lang string, userName string, taskName string) (strin
 	if !isValidLang(lang) {
 		return "", fmt.Errorf("unsupported language")
 	}
-	err := config.LoadEnv()
+	err := godotenv.Load()
 	if err != nil {
 		return "", fmt.Errorf("error loading .env file")
 	}
-	endpoint := fmt.Sprintf("--endpoint-url=https://%v", config.GetEndpoint())
-	container := fmt.Sprintf("s3://%v/%v", config.GetContainer(), path)
+	endpoint := fmt.Sprintf("--endpoint-url=https://%v", "config.GetEndpoint()")
+	container := fmt.Sprintf("s3://%v/%v", "config.GetContainer()", path)
 
 	userFile := fmt.Sprintf("%v-%v.%v", taskName, userName, lang)
 

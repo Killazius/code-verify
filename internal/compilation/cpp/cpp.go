@@ -1,8 +1,9 @@
-package compilation
+package cpp
 
 import (
 	"bytes"
-	"compile-server/internal/models"
+	"compile-server/internal/compilation"
+	"compile-server/internal/handlers/ws/utils"
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -12,8 +13,8 @@ import (
 	"time"
 )
 
-func BuildCPP(taskName string, userFile string) error {
-	baseFile := fmt.Sprintf("src/%v/%v", taskName, models.BaseCpp)
+func Build(taskName string, userFile string) error {
+	baseFile := fmt.Sprintf("src/%v/%v", taskName, compilation.BaseCpp)
 
 	baseContent, err := os.ReadFile(baseFile)
 	if err != nil {
@@ -36,7 +37,7 @@ func BuildCPP(taskName string, userFile string) error {
 	return nil
 }
 
-func CompileCPP(userFile string, TaskName string) (string, error) {
+func Compile(userFile string, TaskName string) (string, error) {
 	userFileExe := strings.Replace(userFile, ".cpp", ".exe", 1)
 	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	cmd := exec.Command("g++", "-o", path, userFile)
@@ -57,8 +58,8 @@ func CompileCPP(userFile string, TaskName string) (string, error) {
 
 }
 
-func TestCPP(userFile string, TaskName string) (string, error) {
-	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestCpp)
+func Test(userFile string, TaskName string) (string, error) {
+	path := fmt.Sprintf("src/%v/%v", TaskName, compilation.TestCpp)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -87,59 +88,55 @@ func TestCPP(userFile string, TaskName string) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err
 		}
-		return models.Timeout, nil
+		return utils.Timeout, nil
 	}
 }
 
-func RunCPP(conn *websocket.Conn, userFile string, TaskName string) error {
-	err := BuildCPP(TaskName, userFile)
-	if err != nil {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Build,
-			Message: err.Error(),
-		})
-		//log.Printf("build stage failed: %s", err.Error())
-		return err
+func Run(conn *websocket.Conn, userFile string, TaskName string) error {
+	const op = "compilation.cpp.Run"
+	if err := Build(TaskName, userFile); err != nil {
+		errSend := utils.SendJSON(conn, utils.Build, err.Error())
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
+		return fmt.Errorf("%s: %v", op, err)
 	} else {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Build,
-			Message: models.Success,
-		})
+		errSend := utils.SendJSON(conn, utils.Build, utils.Success)
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
 	}
-	userFileExe, err := CompileCPP(userFile, TaskName)
+	userFileExe, err := Compile(userFile, TaskName)
 	if err != nil && userFileExe == "" {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Compile,
-			Message: err.Error(),
-		})
-		//log.Printf("compile stage failed: %s", err.Error())
-		return err
+		errSend := utils.SendJSON(conn, utils.Compile, err.Error())
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
+		return fmt.Errorf("%s: %v", op, err)
 	} else {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Compile,
-			Message: models.Success,
-		})
+		errSend := utils.SendJSON(conn, utils.Compile, utils.Success)
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
 	}
-	output, errCmd := TestCPP(userFileExe, TaskName)
+	output, errCmd := Test(userFileExe, TaskName)
 	output = strings.ReplaceAll(output, "\n", "")
 	if errCmd != nil {
-		//log.Printf("test stage failed: %s", errCmd.Error())
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Test,
-			Message: errCmd.Error(),
-		})
-		return errCmd
+		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
+		return fmt.Errorf("%s: %v", op, errCmd)
 	} else {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Test,
-			Message: output,
-		})
+		errSend := utils.SendJSON(conn, utils.Test, output)
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
 	}
 	outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	err = os.Remove(outputFileExePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %v", op, err)
 	}
-	//log.Printf("test result: %s", output)
 	return nil
 }

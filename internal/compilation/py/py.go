@@ -1,21 +1,21 @@
-package compilation
+package py
 
 import (
 	"bytes"
-	"compile-server/internal/models"
+	"compile-server/internal/compilation"
+	"compile-server/internal/handlers/ws/utils"
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 )
 
-func MakePY(taskName string, userFile string) (string, error) {
+func Build(taskName string, userFile string) (string, error) {
 	pathTask := fmt.Sprintf("src/%v", taskName)
-	baseFile := fmt.Sprintf("%v/%v", pathTask, models.BasePy)
+	baseFile := fmt.Sprintf("%v/%v", pathTask, compilation.BasePy)
 	outputFile := fmt.Sprintf("%v/%v", pathTask, userFile)
 
 	baseContent, err := os.ReadFile(baseFile)
@@ -41,8 +41,8 @@ func MakePY(taskName string, userFile string) (string, error) {
 	return outputFile, nil
 }
 
-func TestPY(TaskName string, outputFile string) (string, error) {
-	path := fmt.Sprintf("src/%v/%v", TaskName, models.TestPy)
+func Test(TaskName string, outputFile string) (string, error) {
+	path := fmt.Sprintf("src/%v/%v", TaskName, compilation.TestPy)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -71,43 +71,41 @@ func TestPY(TaskName string, outputFile string) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return "", err
 		}
-		return models.Timeout, nil
+		return utils.Timeout, nil
 	}
 }
-func RunPY(conn *websocket.Conn, userFile string, TaskName string) error {
-	outputFile, err := MakePY(TaskName, userFile)
+func Run(conn *websocket.Conn, userFile string, TaskName string) error {
+	const op = "compilation.py.Run"
+	outputFile, err := Build(TaskName, userFile)
 	if err != nil && outputFile == "" {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Build,
-			Message: err.Error(),
-		})
-		log.Printf("build stage failed: %s", err.Error())
-		return err
+		errSend := utils.SendJSON(conn, utils.Build, err.Error())
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
+		return fmt.Errorf("%s: %v", op, err)
 	} else {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Build,
-			Message: models.Success,
-		})
+		errSend := utils.SendJSON(conn, utils.Build, utils.Success)
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
 	}
-	output, errCmd := TestPY(TaskName, outputFile)
+	output, errCmd := Test(TaskName, outputFile)
 	output = strings.ReplaceAll(output, "\n", "")
 	if errCmd != nil {
 		err = os.Remove(outputFile)
 		if err != nil {
 			return fmt.Errorf("%s: %v", outputFile, err)
 		}
-		log.Printf("test stage failed: %s", errCmd.Error())
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Test,
-			Message: errCmd.Error(),
-		})
-		return errCmd
+		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
+		return fmt.Errorf("%s: %v", op, errCmd)
 	} else {
-		conn.WriteJSON(models.Answer{
-			Stage:   models.Test,
-			Message: output,
-		})
+		errSend := utils.SendJSON(conn, utils.Test, output)
+		if errSend != nil {
+			return fmt.Errorf("%s: %v", op, errSend)
+		}
 	}
-	log.Printf("test result: %s", output)
 	return nil
 }

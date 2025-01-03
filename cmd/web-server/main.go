@@ -21,7 +21,7 @@ func main() {
 	router.Use(customLogger.New(log))
 	router.Use(middleware.Recoverer)
 
-	router.HandleFunc("/ws", ws.New(log))
+	router.HandleFunc("/ws", ws.New(log, cfg.Env))
 	server := http.Server{
 		Addr:         cfg.Address,
 		Handler:      router,
@@ -30,8 +30,8 @@ func main() {
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
 	}
 
-	log.Info("starting server", "address", cfg.Address)
+	log.Info("starting server", "address", cfg.Address, "env", cfg.Env)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("failed to start server", slog.Any("error", err))
+		log.Error("failed to start server", slog.String("error", err.Error()))
 	}
 }

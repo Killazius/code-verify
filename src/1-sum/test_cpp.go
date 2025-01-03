@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"compile-server/internal/models"
+	"compile-server/internal/compilation"
 	"fmt"
 	"log"
 	"os"
@@ -14,8 +14,8 @@ import (
 
 func main() {
 	path := "src/1-sum/"
-	testFile := models.TestsTxt
-	userFileExe := string(os.Args[1])
+	testFile := compilation.TestsTxt
+	userFileExe := os.Args[1]
 	userFileExe = fmt.Sprintf("%v%v", path, userFileExe)
 
 	file, err := os.Open(fmt.Sprintf("%v%v", path, testFile))

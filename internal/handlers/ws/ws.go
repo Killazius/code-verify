@@ -121,6 +121,7 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 					return
 				}
 			}
+			break
 		}
 	}
 }

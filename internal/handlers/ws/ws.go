@@ -36,7 +36,7 @@ type UserMessage struct {
 func New(log *slog.Logger, env string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.ws.New"
-		log := log.With(
+		log = log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
@@ -67,18 +67,13 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 				log.Error("unmarshal failed", slog.String(logger.Err, err.Error()))
 				return
 			}
-			var (
-				userName string
-				status   int
-			)
-			// TODO: mock for token. Надо будет рефакторить, не нравится решение
-			if env == "local" {
-				userName = "localhost"
-				status = http.StatusOK
-			} else {
-				userName, status = handlers.GetName(log, user.Token)
-			}
+			log.Info("request JSON decoded", slog.Any("json", user))
+			userName, status, errGet := handlers.GetName(user.Token, env)
 
+			if errGet != nil {
+				log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
+				return
+			}
 			err = utils.SendStatus(conn, status)
 			if err != nil {
 				log.Error("send status-json failed", slog.String(logger.Err, err.Error()))
@@ -89,6 +84,7 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 				log.Error("token-status != 200", slog.Int("token-status", status))
 				return
 			}
+			log.Info("token verified", slog.String("username", userName))
 
 			userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
 			err = compilation.CreateFile(userFile, user.Code, user.Lang)

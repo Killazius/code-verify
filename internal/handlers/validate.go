@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 )
 
-type Response struct {
-	Username string `json:"username"`
-}
-
-func GetName(log *slog.Logger, token string) (string, int) {
+func GetName(token string, env string) (string, int, error) {
+	const op = "handlers.validate.GetName"
+	if env == "local" {
+		return "localhost", http.StatusOK, nil
+	}
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
 
 	tr := &http.Transport{
@@ -23,8 +22,7 @@ func GetName(log *slog.Logger, token string) (string, int) {
 
 	resp, err := client.Get(url)
 	if err != nil {
-		log.Error("get request failed:", err)
-		return "", http.StatusBadRequest
+		return "", http.StatusBadRequest, fmt.Errorf("%s: %v", op, err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -34,21 +32,21 @@ func GetName(log *slog.Logger, token string) (string, int) {
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		log.Error("status code != 200:", resp.StatusCode)
-		return "", http.StatusBadRequest
+		return "", http.StatusBadRequest, fmt.Errorf("%s: %s", op, resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("status code != 200:", resp.StatusCode)
-		return "", http.StatusInternalServerError
+		return "", http.StatusInternalServerError, fmt.Errorf("%s: %v", op, err)
 	}
 
-	var response Response
+	var response struct {
+		Username string `json:"username"`
+	}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return "", http.StatusInternalServerError
+		return "", http.StatusInternalServerError, fmt.Errorf("%s: %v", op, err)
 	}
 
-	return response.Username, http.StatusOK
+	return response.Username, http.StatusOK, nil
 }

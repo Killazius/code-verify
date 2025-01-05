@@ -1,25 +1,31 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"compile-server/internal/compilation"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 )
 
+type testCase struct {
+	Input  [2]string `json:"input"`
+	Answer string    `json:"answer"`
+}
+
+type testCases []testCase
+
 func main() {
 	path := "src/1-sum/"
-	testFile := compilation.TestsTxt
 	solutionFile := os.Args[1]
-	file, err := os.Open(fmt.Sprintf("%v%v", path, testFile))
+
+	var tests testCases
+	file, err := os.Open(fmt.Sprintf("%v%v", path, compilation.TestFile))
 	if err != nil {
-		fmt.Println("Ошибка при открытии файла:", err)
-		return
+		fmt.Println(err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
@@ -27,46 +33,29 @@ func main() {
 			return
 		}
 	}(file)
+	byteValue, err := io.ReadAll(file)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	scanner := bufio.NewScanner(file)
+	err = json.Unmarshal(byteValue, &tests)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	var var1, var2 string
-	var var3 int
-
-	for scanner.Scan() {
-		i := 1
-		line := scanner.Text()
-
-		nums := strings.Fields(line)
-		if len(nums) == 3 {
-			var1 = nums[0]
-			var2 = nums[1]
-			var3, _ = strconv.Atoi(nums[2])
-			cmd := exec.Command("python3", solutionFile, var1, var2)
-			var out bytes.Buffer
-			cmd.Stdout = &out
-			err := cmd.Run()
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			result := out.String()
-			cleanedResult := strings.ReplaceAll(result, "\r", "")
-			cleanedResult = strings.TrimSpace(cleanedResult)
-			resultInt, err := strconv.Atoi(cleanedResult)
-			if err != nil {
-				fmt.Printf("Ошибка при преобразовании строки '%s' в int: %v\n", cleanedResult, err)
-				return
-			}
-			if resultInt != var3 {
-				fmt.Printf("#%v test. Wrong answer", i)
-				return
-			}
-			i++
-		} else {
-			fmt.Println("Неверный формат строки")
+	for i, test := range tests {
+		num1, num2 := test.Input[0], test.Input[1]
+		cmd := exec.Command("python3", solutionFile, num1, num2)
+		output, errCmd := cmd.CombinedOutput()
+		result := strings.TrimSpace(string(output))
+		if errCmd != nil {
+			log.Fatal(errCmd)
+			return
+		}
+		if result != test.Answer {
+			fmt.Printf("Test case #%d failed.\n", i+1)
+			return
 		}
 	}
 	fmt.Println("success")
-	return
 }

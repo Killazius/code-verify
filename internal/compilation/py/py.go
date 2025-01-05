@@ -44,13 +44,12 @@ func Build(taskName string, userFile string) (string, error) {
 func Test(TaskName string, outputFile string) (string, error) {
 	path := fmt.Sprintf("src/%v/%v", TaskName, compilation.TestPy)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, outputFile)
-	var stdoutBuf, stderrBuf bytes.Buffer
+	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
 		return "", err
@@ -90,12 +89,14 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 		}
 	}
 	output, errCmd := Test(TaskName, outputFile)
-	output = strings.ReplaceAll(output, "\n", "")
-	if errCmd != nil {
+	defer func() {
 		err = os.Remove(outputFile)
 		if err != nil {
-			return fmt.Errorf("%s: %v", outputFile, err)
+			return
 		}
+	}()
+	output = strings.ReplaceAll(output, "\n", "")
+	if errCmd != nil {
 		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
 		if errSend != nil {
 			return fmt.Errorf("%s: %v", op, errSend)

@@ -17,7 +17,7 @@ const (
 const (
 	BaseCpp  = "base.cpp"
 	BasePy   = "base.py"
-	TestsTxt = "test.txt"
+	TestFile = "test.json"
 	TestCpp  = "test_cpp.go"
 	TestPy   = "test_py.go"
 )

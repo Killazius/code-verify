@@ -65,9 +65,8 @@ func Test(userFile string, TaskName string) (string, error) {
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, userFile)
-	var stdoutBuf, stderrBuf bytes.Buffer
+	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
 		return "", err
@@ -107,6 +106,7 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 		}
 	}
 	userFileExe, err := Compile(userFile, TaskName)
+
 	if err != nil && userFileExe == "" {
 		errSend := utils.SendJSON(conn, utils.Compile, err.Error())
 		if errSend != nil {
@@ -121,6 +121,13 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 	}
 	output, errCmd := Test(userFileExe, TaskName)
 	output = strings.ReplaceAll(output, "\n", "")
+	defer func() {
+		outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
+		err = os.Remove(outputFileExePath)
+		if err != nil {
+			return
+		}
+	}()
 	if errCmd != nil {
 		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
 		if errSend != nil {

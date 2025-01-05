@@ -30,9 +30,6 @@ type UserMessage struct {
 	Token    string           `json:"token"`
 }
 
-// New TODO: Решить проблему с логированием.
-// Почему то если сделать 2 запроса, то во 2 логе кидает op и request_id первого запроса
-// upd: вроде решил, но с помощью затенения переменной log
 func New(log *slog.Logger, env string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.ws.New"

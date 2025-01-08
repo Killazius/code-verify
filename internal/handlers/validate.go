@@ -14,7 +14,6 @@ func GetName(token string, env string) (string, int, error) {
 		return "localhost", http.StatusOK, nil
 	}
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
-
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}

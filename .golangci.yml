@@ -1,0 +1,16 @@
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - goconst
+    # gosec Выключен из-за протокола TLS к запросу по токену
+    - govet
+    - ineffassign
+    - gosimple
+    - staticcheck
+    - unused
+    - revive
+    - typecheck
+    - paralleltest
+
+

@@ -30,7 +30,7 @@ func Build(taskName string, userFile string) error {
 		return err
 	}
 
-	err = os.WriteFile(userFile, append(baseContent, userContent...), 0644)
+	err = os.WriteFile(userFile, append(baseContent, userContent...), 0600)
 	if err != nil {
 		return fmt.Errorf("%s: %v", userFile, err)
 	}
@@ -65,9 +65,8 @@ func Test(userFile string, TaskName string) (string, error) {
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", path, userFile)
-	var stdoutBuf, stderrBuf bytes.Buffer
+	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
 		return "", err
@@ -100,39 +99,49 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 			return fmt.Errorf("%s: %v", op, errSend)
 		}
 		return fmt.Errorf("%s: %v", op, err)
-	} else {
-		errSend := utils.SendJSON(conn, utils.Build, utils.Success)
-		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
-		}
 	}
+	errSend := utils.SendJSON(conn, utils.Build, utils.Success)
+	if errSend != nil {
+		return fmt.Errorf("%s: %v", op, errSend)
+	}
+
 	userFileExe, err := Compile(userFile, TaskName)
+
 	if err != nil && userFileExe == "" {
 		errSend := utils.SendJSON(conn, utils.Compile, err.Error())
 		if errSend != nil {
 			return fmt.Errorf("%s: %v", op, errSend)
 		}
 		return fmt.Errorf("%s: %v", op, err)
-	} else {
-		errSend := utils.SendJSON(conn, utils.Compile, utils.Success)
-		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
-		}
 	}
+	errSend = utils.SendJSON(conn, utils.Compile, utils.Success)
+	if errSend != nil {
+		return fmt.Errorf("%s: %v", op, errSend)
+	}
+
 	output, errCmd := Test(userFileExe, TaskName)
 	output = strings.ReplaceAll(output, "\n", "")
+
+	defer func() {
+		outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
+		err = os.Remove(outputFileExePath)
+		if err != nil {
+			return
+		}
+	}()
+
 	if errCmd != nil {
 		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
 		if errSend != nil {
 			return fmt.Errorf("%s: %v", op, errSend)
 		}
 		return fmt.Errorf("%s: %v", op, errCmd)
-	} else {
-		errSend := utils.SendJSON(conn, utils.Test, output)
-		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
-		}
 	}
+	errSend = utils.SendJSON(conn, utils.Test, output)
+	if errSend != nil {
+		return fmt.Errorf("%s: %v", op, errSend)
+	}
+
 	outputFileExePath := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
 	err = os.Remove(outputFileExePath)
 	if err != nil {

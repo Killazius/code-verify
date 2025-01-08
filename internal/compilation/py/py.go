@@ -28,7 +28,7 @@ func Build(taskName string, userFile string) (string, error) {
 		return "", fmt.Errorf("%s: %v", userFile, err)
 	}
 
-	err = os.WriteFile(outputFile, append(userContent, baseContent...), 0644)
+	err = os.WriteFile(outputFile, append(userContent, baseContent...), 0600)
 	if err != nil {
 		return "", fmt.Errorf("%s: %v", outputFile, err)
 	}
@@ -82,12 +82,12 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 			return fmt.Errorf("%s: %v", op, errSend)
 		}
 		return fmt.Errorf("%s: %v", op, err)
-	} else {
-		errSend := utils.SendJSON(conn, utils.Build, utils.Success)
-		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
-		}
 	}
+	errSend := utils.SendJSON(conn, utils.Build, utils.Success)
+	if errSend != nil {
+		return fmt.Errorf("%s: %v", op, errSend)
+	}
+
 	output, errCmd := Test(TaskName, outputFile)
 	defer func() {
 		err = os.Remove(outputFile)
@@ -102,11 +102,11 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 			return fmt.Errorf("%s: %v", op, errSend)
 		}
 		return fmt.Errorf("%s: %v", op, errCmd)
-	} else {
-		errSend := utils.SendJSON(conn, utils.Test, output)
-		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
-		}
 	}
+	errSend = utils.SendJSON(conn, utils.Test, output)
+	if errSend != nil {
+		return fmt.Errorf("%s: %v", op, errSend)
+	}
+
 	return nil
 }

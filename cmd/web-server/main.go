@@ -4,7 +4,7 @@ import (
 	"compile-server/internal/config"
 	"compile-server/internal/handlers/ws"
 	"compile-server/internal/logger"
-	"compile-server/internal/middleware/customLogger"
+	"compile-server/internal/middleware/customlogger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
@@ -18,7 +18,7 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
-	router.Use(customLogger.New(log))
+	router.Use(customlogger.New(log))
 	router.Use(middleware.Recoverer)
 
 	router.HandleFunc("/ws", ws.New(log, cfg.Env))

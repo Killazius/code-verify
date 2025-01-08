@@ -18,7 +18,7 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
+	CheckOrigin: func(_ *http.Request) bool {
 		return true
 	},
 }
@@ -51,70 +51,67 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 			}
 		}()
 
-		for {
-			var message []byte
-			_, message, err = conn.ReadMessage()
-			if err != nil {
-				log.Error("could not read the message", slog.String(logger.Err, err.Error()))
-				return
-			}
+		var message []byte
+		_, message, err = conn.ReadMessage()
+		if err != nil {
+			log.Error("could not read the message", slog.String(logger.Err, err.Error()))
+			return
+		}
 
-			var user UserMessage
-			if err = json.Unmarshal(message, &user); err != nil {
-				log.Error("unmarshal failed", slog.String(logger.Err, err.Error()))
-				return
-			}
-			log.Info("request JSON decoded", slog.Any("json", user))
-			userName, status, errGet := handlers.GetName(user.Token, env)
+		var user UserMessage
+		if err = json.Unmarshal(message, &user); err != nil {
+			log.Error("unmarshal failed", slog.String(logger.Err, err.Error()))
+			return
+		}
+		log.Info("request JSON decoded", slog.Any("json", user))
+		userName, status, errGet := handlers.GetName(user.Token, env)
 
-			if errGet != nil {
-				log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
-				return
-			}
-			err = utils.SendStatus(conn, status)
-			if err != nil {
-				log.Error("send status-json failed", slog.String(logger.Err, err.Error()))
-				return
-			}
+		if errGet != nil {
+			log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
+			return
+		}
+		err = utils.SendStatus(conn, status)
+		if err != nil {
+			log.Error("send status-json failed", slog.String(logger.Err, err.Error()))
+			return
+		}
 
-			if status != http.StatusOK {
-				log.Error("token-status != 200", slog.Int("token-status", status))
-				return
-			}
-			log.Info("token verified", slog.String("username", userName))
+		if status != http.StatusOK {
+			log.Error("token-status != 200", slog.Int("token-status", status))
+			return
+		}
+		log.Info("token verified", slog.String("username", userName))
 
-			userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
-			err = compilation.CreateFile(userFile, user.Code, user.Lang)
-			if err != nil {
-				log.Error("create file failed", slog.String(logger.Err, err.Error()))
-				return
-			}
+		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
+		err = compilation.CreateFile(userFile, user.Code, user.Lang)
+		if err != nil {
+			log.Error("create file failed", slog.String(logger.Err, err.Error()))
+		}
 
-			switch user.Lang {
-			case "cpp":
-				{
-					err = cpp.Run(conn, userFile, user.TaskName)
-					if err != nil {
-						log.Error("run cpp file failed", slog.String(logger.Err, err.Error()))
-						return
-					}
-				}
-			case "py":
-				{
-					err = py.Run(conn, userFile, user.TaskName)
-					if err != nil {
-						log.Error("run py file failed", slog.String(logger.Err, err.Error()))
-						return
-					}
-				}
-			default:
-				err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", user.Lang)))
+		switch user.Lang {
+		case compilation.LangCpp:
+			{
+				err = cpp.Run(conn, userFile, user.TaskName)
 				if err != nil {
-					log.Error("failed writeMessage to conn", slog.String(logger.Err, err.Error()))
+					log.Error("run cpp file failed", slog.String(logger.Err, err.Error()))
 					return
 				}
 			}
-			break
+		case compilation.LangPy:
+			{
+				err = py.Run(conn, userFile, user.TaskName)
+				if err != nil {
+					log.Error("run py file failed", slog.String(logger.Err, err.Error()))
+					return
+				}
+			}
+		default:
+			err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", user.Lang)))
+			if err != nil {
+				log.Error("failed writeMessage to conn", slog.String(logger.Err, err.Error()))
+				return
+			}
 		}
+
 	}
 }

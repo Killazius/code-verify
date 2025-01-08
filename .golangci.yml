@@ -12,5 +12,6 @@ linters:
     - revive
     - typecheck
     - paralleltest
+    - testifylint
 
 

@@ -1,0 +1,14 @@
+
+version: "3"
+
+tasks:
+  linter:
+    aliases:
+      - lint
+    desc: "run linter to codebase"
+    cmds:
+      - golangci-lint run ./...
+  build:
+    desc: "build project"
+    cmds:
+      - go run cmd/web-server/main.go

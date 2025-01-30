@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"compile-server/internal/compilation"
@@ -18,10 +18,8 @@ type testCase struct {
 
 type testCases []testCase
 
-func main() {
+func Run(command string, args ...string) (string, error) {
 	path := "src/1-sum/"
-	solutionFile := os.Args[1]
-
 	var tests testCases
 	file, err := os.Open(fmt.Sprintf("%v%v", path, compilation.TestFile))
 	if err != nil {
@@ -33,6 +31,7 @@ func main() {
 			return
 		}
 	}(file)
+
 	byteValue, err := io.ReadAll(file)
 	if err != nil {
 		log.Fatal(err)
@@ -44,18 +43,17 @@ func main() {
 	}
 
 	for i, test := range tests {
-		num1, num2 := test.Input[0], test.Input[1]
-		cmd := exec.Command("python3", solutionFile, num1, num2)
+		cmd := exec.Command(command, args...)
+		cmd.Stdin = strings.NewReader(test.Input[0] + "\n" + test.Input[1] + "\n")
+
 		output, errCmd := cmd.CombinedOutput()
 		result := strings.TrimSpace(string(output))
 		if errCmd != nil {
-			log.Fatal(errCmd)
-			return
+			return "", errCmd
 		}
 		if result != test.Answer {
-			fmt.Printf("Test case #%d failed.\n", i+1)
-			return
+			return fmt.Sprintf("Test case #%d failed.\n", i+1), nil
 		}
 	}
-	fmt.Println("success")
+	return "success", nil
 }

@@ -91,7 +91,7 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 		switch user.Lang {
 		case compilation.LangCpp:
 			{
-				err = cpp.Run(conn, userFile, user.TaskName)
+				err = cpp.Run(conn, userFile)
 				if err != nil {
 					log.Error("run cpp file failed", slog.String(logger.Err, err.Error()))
 					return
@@ -99,7 +99,7 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 			}
 		case compilation.LangPy:
 			{
-				err = py.Run(conn, userFile, user.TaskName)
+				err = py.Run(conn, userFile)
 				if err != nil {
 					log.Error("run py file failed", slog.String(logger.Err, err.Error()))
 					return

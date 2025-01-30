@@ -18,8 +18,8 @@ const (
 	BaseCpp  = "base.cpp"
 	BasePy   = "base.py"
 	TestFile = "test.json"
-	TestCpp  = "test_cpp.go"
-	TestPy   = "test_py.go"
+	TestCpp  = "cpp.go"
+	TestPy   = "py.go"
 )
 
 // MakeFile Dispatched: убрали функцию сохранения на s3. думать как сделать s3 для хранения попыток и всего прочего

@@ -13,34 +13,34 @@ import (
 	"time"
 )
 
-func Build(taskName string, userFile string) error {
-	baseFile := fmt.Sprintf("src/%v/%v", taskName, compilation.BaseCpp)
-
-	baseContent, err := os.ReadFile(baseFile)
-	if err != nil {
-		return fmt.Errorf("%s: %v", baseFile, err)
-	}
-
-	userContent, err := os.ReadFile(userFile)
-	if err != nil {
-		return fmt.Errorf("%s: %v", userFile, err)
-	}
-	err = os.Remove(userFile)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(userFile, append(baseContent, userContent...), 0600)
-	if err != nil {
-		return fmt.Errorf("%s: %v", userFile, err)
-	}
-	return nil
-}
+//func Build(taskName string, userFile string) error {
+//	//baseFile := fmt.Sprintf("src/%v/%v", taskName, compilation.BaseCpp)
+//	//
+//	//baseContent, err := os.ReadFile(baseFile)
+//	//if err != nil {
+//	//	return fmt.Errorf("%s: %v", baseFile, err)
+//	//}
+//
+//	userContent, err := os.ReadFile(userFile)
+//	if err != nil {
+//		return fmt.Errorf("%s: %v", userFile, err)
+//	}
+//	err = os.Remove(userFile)
+//	if err != nil {
+//		return err
+//	}
+//
+//	err = os.WriteFile(userFile, userContent, 0600)
+//	if err != nil {
+//		return fmt.Errorf("%s: %v", userFile, err)
+//	}
+//	return nil
+//}
 
 func Compile(userFile string, TaskName string) (string, error) {
 	userFileExe := strings.Replace(userFile, ".cpp", ".exe", 1)
-	path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
-	cmd := exec.Command("g++", "-o", path, userFile)
+	//path := fmt.Sprintf("src/%v/%v", TaskName, userFileExe)
+	cmd := exec.Command("g++", "-o", userFileExe, userFile)
 
 	output, errCmd := cmd.CombinedOutput()
 	if errCmd != nil {
@@ -93,17 +93,17 @@ func Test(userFile string, TaskName string) (string, error) {
 
 func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 	const op = "compilation.cpp.Run"
-	if err := Build(TaskName, userFile); err != nil {
-		errSend := utils.SendJSON(conn, utils.Build, err.Error())
-		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
-		}
-		return fmt.Errorf("%s: %v", op, err)
-	}
-	errSend := utils.SendJSON(conn, utils.Build, utils.Success)
-	if errSend != nil {
-		return fmt.Errorf("%s: %v", op, errSend)
-	}
+	//if err := Build(TaskName, userFile); err != nil {
+	//	errSend := utils.SendJSON(conn, utils.Build, err.Error())
+	//	if errSend != nil {
+	//		return fmt.Errorf("%s: %v", op, errSend)
+	//	}
+	//	return fmt.Errorf("%s: %v", op, err)
+	//}
+	//errSend := utils.SendJSON(conn, utils.Build, utils.Success)
+	//if errSend != nil {
+	//	return fmt.Errorf("%s: %v", op, errSend)
+	//}
 
 	userFileExe, err := Compile(userFile, TaskName)
 
@@ -114,7 +114,8 @@ func Run(conn *websocket.Conn, userFile string, TaskName string) error {
 		}
 		return fmt.Errorf("%s: %v", op, err)
 	}
-	errSend = utils.SendJSON(conn, utils.Compile, utils.Success)
+
+	errSend := utils.SendJSON(conn, utils.Compile, utils.Success)
 	if errSend != nil {
 		return fmt.Errorf("%s: %v", op, errSend)
 	}

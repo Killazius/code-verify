@@ -14,7 +14,6 @@ func SendStatus(conn *websocket.Conn, status int) error {
 type Stage string
 
 const (
-	Build   Stage  = "build"
 	Compile Stage  = "compile"
 	Test    Stage  = "test"
 	Success string = "success"

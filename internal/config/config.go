@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+var (
+	Env string
+)
+
 type Config struct {
 	Env        string `yaml:"env" env:"ENV" env-default:"local"`
 	HTTPServer `yaml:"http_server"`
@@ -37,5 +41,6 @@ func MustLoad() *Config {
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 		log.Fatalf("Error loading config: %s", err)
 	}
+	Env = cfg.Env
 	return &cfg
 }

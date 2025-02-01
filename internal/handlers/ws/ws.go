@@ -30,7 +30,7 @@ type UserMessage struct {
 	Token    string           `json:"token"`
 }
 
-func New(log *slog.Logger, env string) http.HandlerFunc {
+func New(log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.ws.New"
 		log = log.With(
@@ -64,7 +64,7 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 			return
 		}
 		log.Info("request JSON decoded", slog.Any("json", user))
-		userName, status, errGet := handlers.GetName(user.Token, env)
+		userName, status, errGet := handlers.GetName(user.Token)
 
 		if errGet != nil {
 			log.Error("get name failed", slog.String(logger.Err, errGet.Error()))

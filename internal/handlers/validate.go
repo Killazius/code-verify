@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"compile-server/internal/config"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 )
 
-func GetName(token string, env string) (string, int, error) {
+func GetName(token string) (string, int, error) {
 	const op = "handlers.validate.GetName"
-	if env == "local" {
+	if config.Env == "local" {
 		return "localhost", http.StatusOK, nil
 	}
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
@@ -52,6 +53,9 @@ func GetName(token string, env string) (string, int, error) {
 
 func MarkTaskAsCompleted(username, token string) (int, error) {
 	const op = "handlers.validate.MarkTaskAsCompleted"
+	if config.Env == "local" {
+		return http.StatusOK, nil
+	}
 	url := fmt.Sprintf("https://studyingit-api.ru/api/%v/complete/", username)
 	client := &http.Client{}
 	req, err := http.NewRequest("PATCH", url, nil)

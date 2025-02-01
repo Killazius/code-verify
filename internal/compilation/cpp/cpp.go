@@ -34,6 +34,12 @@ func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.Comp
 	const op = "compilation.cpp.Run"
 
 	userFileExe, err := Compile(userFile)
+	defer func() {
+		err := os.Remove(userFileExe)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil && userFileExe == "" {
 		errSend := utils.SendJSON(conn, utils.Compile, err.Error())
@@ -61,11 +67,6 @@ func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.Comp
 	errSend = utils.SendJSON(conn, utils.Test, output)
 	if errSend != nil {
 		return nil, fmt.Errorf("%s: %w", op, errSend)
-	}
-
-	err = os.Remove(userFileExe)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &utils.CompilationResult{Success: output == utils.OK, Output: output}, nil

@@ -8,25 +8,25 @@ import (
 	"os"
 )
 
-func Run(conn *websocket.Conn, userFile string) error {
+func Run(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationResult, error) {
 	const op = "compilation.py.Run"
 
 	command := "py"
-	output, errCmd := test.Run(command, userFile)
+	output, errCmd := test.Run(command, taskName, userFile)
 	if errCmd != nil {
 		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
 		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
+			return nil, fmt.Errorf("%s: %w", op, errSend)
 		}
-		return fmt.Errorf("%s: %v", op, errCmd)
+		return nil, fmt.Errorf("%s: %w", op, errCmd)
 	}
 	errSend := utils.SendJSON(conn, utils.Test, output)
 	if errSend != nil {
-		return fmt.Errorf("%s: %v", op, errSend)
+		return nil, fmt.Errorf("%s: %w", op, errSend)
 	}
 	err := os.Remove(userFile)
 	if err != nil {
-		return fmt.Errorf("%s: %v", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	return nil
+	return &utils.CompilationResult{Success: output == utils.OK, Output: output}, nil
 }

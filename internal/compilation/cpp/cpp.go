@@ -30,42 +30,44 @@ func Compile(userFile string) (string, error) {
 
 }
 
-func Run(conn *websocket.Conn, userFile string) error {
+func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationResult, error) {
 	const op = "compilation.cpp.Run"
 
 	userFileExe, err := Compile(userFile)
+	defer func() {
+		err := os.Remove(userFileExe)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil && userFileExe == "" {
 		errSend := utils.SendJSON(conn, utils.Compile, err.Error())
 		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
+			return nil, fmt.Errorf("%s: %w", op, errSend)
 		}
-		return fmt.Errorf("%s: %v", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	errSend := utils.SendJSON(conn, utils.Compile, utils.Success)
+	errSend := utils.SendJSON(conn, utils.Compile, utils.OK)
 	if errSend != nil {
-		return fmt.Errorf("%s: %v", op, errSend)
+		return nil, fmt.Errorf("%s: %w", op, errSend)
 	}
 
 	command := fmt.Sprintf("./%v", userFileExe)
-	output, errCmd := test.Run(command)
+	output, errCmd := test.Run(command, taskName)
 
 	if errCmd != nil {
 		errSend = utils.SendJSON(conn, utils.Test, errCmd.Error())
 		if errSend != nil {
-			return fmt.Errorf("%s: %v", op, errSend)
+			return nil, fmt.Errorf("%s: %w", op, errSend)
 		}
-		return fmt.Errorf("%s: %v", op, errCmd)
+		return nil, fmt.Errorf("%s: %w", op, errCmd)
 	}
 	errSend = utils.SendJSON(conn, utils.Test, output)
 	if errSend != nil {
-		return fmt.Errorf("%s: %v", op, errSend)
+		return nil, fmt.Errorf("%s: %w", op, errSend)
 	}
 
-	err = os.Remove(userFileExe)
-	if err != nil {
-		return fmt.Errorf("%s: %v", op, err)
-	}
-	return nil
+	return &utils.CompilationResult{Success: output == utils.OK, Output: output}, nil
 }

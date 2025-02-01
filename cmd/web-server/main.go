@@ -21,7 +21,7 @@ func main() {
 	router.Use(customlogger.New(log))
 	router.Use(middleware.Recoverer)
 
-	router.HandleFunc("/ws", ws.New(log, cfg.Env))
+	router.HandleFunc("/ws", ws.New(log))
 	server := http.Server{
 		Addr:         cfg.Address,
 		Handler:      router,

@@ -30,7 +30,7 @@ type UserMessage struct {
 	Token    string           `json:"token"`
 }
 
-func New(log *slog.Logger, env string) http.HandlerFunc {
+func New(log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.ws.New"
 		log = log.With(
@@ -64,7 +64,7 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 			return
 		}
 		log.Info("request JSON decoded", slog.Any("json", user))
-		userName, status, errGet := handlers.GetName(user.Token, env)
+		userName, status, errGet := handlers.GetName(user.Token)
 
 		if errGet != nil {
 			log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
@@ -88,30 +88,33 @@ func New(log *slog.Logger, env string) http.HandlerFunc {
 			log.Error("create file failed", slog.String(logger.Err, err.Error()))
 		}
 
-		switch user.Lang {
-		case compilation.LangCpp:
-			{
-				err = cpp.Run(conn, userFile)
-				if err != nil {
-					log.Error("run cpp file failed", slog.String(logger.Err, err.Error()))
-					return
-				}
-			}
-		case compilation.LangPy:
-			{
-				err = py.Run(conn, userFile)
-				if err != nil {
-					log.Error("run py file failed", slog.String(logger.Err, err.Error()))
-					return
-				}
-			}
-		default:
-			err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", user.Lang)))
+		result, err := handleLanguage(conn, userFile, user.Lang, user.TaskName)
+		if err != nil {
+			log.Error("handle language failed", slog.String(logger.Err, err.Error()))
+		}
+		log.Info("result is received", slog.Any("result", result))
+
+		if result != nil && result.Success {
+			_, err = handlers.MarkTaskAsCompleted(userName, user.Token)
 			if err != nil {
-				log.Error("failed writeMessage to conn", slog.String(logger.Err, err.Error()))
 				return
 			}
 		}
 
+	}
+}
+
+func handleLanguage(conn *websocket.Conn, userFile string, lang compilation.Lang, taskName string) (*utils.CompilationResult, error) {
+	switch lang {
+	case compilation.LangCpp:
+		return cpp.CompileAndRun(conn, userFile, taskName)
+	case compilation.LangPy:
+		return py.Run(conn, userFile, taskName)
+	default:
+		err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", lang)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to write message to conn: %v", err)
+		}
+		return nil, fmt.Errorf("unsupported language: %s", lang)
 	}
 }

@@ -8,11 +8,11 @@ import (
 	"os"
 )
 
-func Run(conn *websocket.Conn, userFile string) (*utils.CompilationResult, error) {
+func Run(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationResult, error) {
 	const op = "compilation.py.Run"
 
 	command := "py"
-	output, errCmd := test.Run(command, userFile)
+	output, errCmd := test.Run(command, taskName, userFile)
 	if errCmd != nil {
 		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
 		if errSend != nil {

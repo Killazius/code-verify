@@ -88,7 +88,7 @@ func New(log *slog.Logger) http.HandlerFunc {
 			log.Error("create file failed", slog.String(logger.Err, err.Error()))
 		}
 
-		result, err := handleLanguage(conn, userFile, user.Lang)
+		result, err := handleLanguage(conn, userFile, user.Lang, user.TaskName)
 		if err != nil {
 			log.Error("handle language failed", slog.String(logger.Err, err.Error()))
 		}
@@ -104,12 +104,12 @@ func New(log *slog.Logger) http.HandlerFunc {
 	}
 }
 
-func handleLanguage(conn *websocket.Conn, userFile string, lang compilation.Lang) (*utils.CompilationResult, error) {
+func handleLanguage(conn *websocket.Conn, userFile string, lang compilation.Lang, taskName string) (*utils.CompilationResult, error) {
 	switch lang {
 	case compilation.LangCpp:
-		return cpp.CompileAndRun(conn, userFile)
+		return cpp.CompileAndRun(conn, userFile, taskName)
 	case compilation.LangPy:
-		return py.Run(conn, userFile)
+		return py.Run(conn, userFile, taskName)
 	default:
 		err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", lang)))
 		if err != nil {

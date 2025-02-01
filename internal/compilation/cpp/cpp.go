@@ -30,7 +30,7 @@ func Compile(userFile string) (string, error) {
 
 }
 
-func CompileAndRun(conn *websocket.Conn, userFile string) (*utils.CompilationResult, error) {
+func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationResult, error) {
 	const op = "compilation.cpp.Run"
 
 	userFileExe, err := Compile(userFile)
@@ -49,7 +49,7 @@ func CompileAndRun(conn *websocket.Conn, userFile string) (*utils.CompilationRes
 	}
 
 	command := fmt.Sprintf("./%v", userFileExe)
-	output, errCmd := test.Run(command)
+	output, errCmd := test.Run(command, taskName)
 
 	if errCmd != nil {
 		errSend = utils.SendJSON(conn, utils.Test, errCmd.Error())

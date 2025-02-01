@@ -47,7 +47,7 @@ func Run(command string, args ...string) (string, error) {
 			}
 		}
 	}
-	return "success", nil
+	return utils.OK, nil
 }
 
 func readTestCases(path string, tests *testCases) error {

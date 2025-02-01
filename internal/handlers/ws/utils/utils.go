@@ -16,9 +16,14 @@ type Stage string
 const (
 	Compile Stage  = "compile"
 	Test    Stage  = "test"
-	Success string = "success"
+	OK      string = "OK"
 	Timeout string = "timeout"
 )
+
+type CompilationResult struct {
+	Success bool
+	Output  string
+}
 
 func SendJSON(conn *websocket.Conn, stage Stage, message interface{}) error {
 	json := struct {

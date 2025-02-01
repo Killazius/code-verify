@@ -65,13 +65,6 @@ func MarkTaskAsCompleted(username, token string) (int, error) {
 		return resp.StatusCode, fmt.Errorf("%s: %w", op, err)
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			return
-		}
-	}(resp.Body)
-
 	if resp.StatusCode != http.StatusOK {
 		return resp.StatusCode, fmt.Errorf("%s: %v", op, resp.Status)
 	}

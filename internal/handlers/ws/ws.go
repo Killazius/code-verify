@@ -77,7 +77,7 @@ func New(log *slog.Logger) http.HandlerFunc {
 		}
 
 		if status != http.StatusOK {
-			log.Error("token-status != 200", slog.Int("token-status", status))
+			log.Error("token-status != 200", slog.Int("token-status", status), slog.String(logger.Err, err.Error()))
 			return
 		}
 		log.Info("token verified", slog.String("username", userName))
@@ -95,10 +95,12 @@ func New(log *slog.Logger) http.HandlerFunc {
 		log.Info("result is received", slog.Any("result", result))
 
 		if result != nil && result.Success {
-			_, err = handlers.MarkTaskAsCompleted(userName, user.Token)
-			if err != nil {
+			status, err = handlers.MarkTaskAsCompleted(userName)
+			if err != nil || status != http.StatusOK {
+				log.Info("mark task failed", slog.Int("token-status", status), slog.String(logger.Err, err.Error()))
 				return
 			}
+			log.Info("task marked", slog.String("task", user.TaskName), slog.String("username", userName))
 		}
 
 	}

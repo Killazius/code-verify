@@ -51,7 +51,7 @@ func GetName(token string) (string, int, error) {
 	return response.Username, http.StatusOK, nil
 }
 
-func MarkTaskAsCompleted(username, token string) (int, error) {
+func MarkTaskAsCompleted(username string) (int, error) {
 	const op = "handlers.validate.MarkTaskAsCompleted"
 	if config.Env == "local" {
 		return http.StatusOK, nil
@@ -63,7 +63,6 @@ func MarkTaskAsCompleted(username, token string) (int, error) {
 		return http.StatusInternalServerError, fmt.Errorf("%s: %w", op, err)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp.StatusCode, fmt.Errorf("%s: %w", op, err)

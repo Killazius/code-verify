@@ -11,7 +11,7 @@ import (
 
 func GetName(token string) (string, int, error) {
 	const op = "handlers.validate.GetName"
-	if config.Env == "local" {
+	if config.Env == config.Local {
 		return "localhost", http.StatusOK, nil
 	}
 	tlsConfig := &tls.Config{
@@ -63,7 +63,7 @@ func GetName(token string) (string, int, error) {
 
 func MarkTaskAsCompleted(username string) (int, error) {
 	const op = "handlers.validate.MarkTaskAsCompleted"
-	if config.Env == "local" {
+	if config.Env == config.Local {
 		return http.StatusOK, nil
 	}
 	url := fmt.Sprintf("https://studyingit-api.ru/api/%v/complete/", username)

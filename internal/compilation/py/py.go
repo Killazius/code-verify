@@ -2,6 +2,7 @@ package py
 
 import (
 	"compile-server/internal/compilation/test"
+	"compile-server/internal/config"
 	"compile-server/internal/handlers/ws/utils"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -10,8 +11,18 @@ import (
 
 func Run(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationResult, error) {
 	const op = "compilation.py.Run"
-
-	command := "py"
+	defer func() {
+		err := os.Remove(userFile)
+		if err != nil {
+			return
+		}
+	}()
+	var command string
+	if config.Env == config.Local {
+		command = "py"
+	} else {
+		command = "python3"
+	}
 	output, errCmd := test.Run(command, taskName, userFile)
 	if errCmd != nil {
 		errSend := utils.SendJSON(conn, utils.Test, errCmd.Error())
@@ -23,10 +34,6 @@ func Run(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationRes
 	errSend := utils.SendJSON(conn, utils.Test, output)
 	if errSend != nil {
 		return nil, fmt.Errorf("%s: %w", op, errSend)
-	}
-	err := os.Remove(userFile)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	return &utils.CompilationResult{Success: output == utils.OK, Output: output}, nil
 }

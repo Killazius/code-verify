@@ -63,7 +63,11 @@ func New(log *slog.Logger) http.HandlerFunc {
 			log.Error("unmarshal failed", slog.String(logger.Err, err.Error()))
 			return
 		}
-		log.Info("request JSON decoded", slog.Any("json", user))
+		log.Info("request JSON decoded",
+			slog.String("code", user.Code),
+			slog.String("lang", string(user.Lang)),
+			slog.String("task_name", user.TaskName),
+		)
 		userName, status, errGet := handlers.GetName(user.Token)
 		err = utils.SendStatus(conn, status)
 		if err != nil {

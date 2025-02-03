@@ -4,6 +4,7 @@ import (
 	"compile-server/internal/handlers/ws/utils"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -70,19 +71,40 @@ func Run(command, taskName string, args ...string) (string, error) {
 		}
 		cmd := exec.CommandContext(ctx, command, args...)
 		cmd.Stdin = strings.NewReader(string(inputData))
-		output, errCmd := cmd.CombinedOutput()
-		select {
-		case <-ctx.Done():
-			return utils.Timeout, ctx.Err()
-		default:
-			if errCmd != nil {
-				return "", fmt.Errorf("command execution failed: %w", errCmd)
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return "", fmt.Errorf("failed to create stdout pipe: %w", err)
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return "", fmt.Errorf("failed to create stderr pipe: %w", err)
+		}
+
+		if err = cmd.Start(); err != nil {
+			return "", fmt.Errorf("failed to start command: %w", err)
+		}
+
+		stdoutData, errStdout := io.ReadAll(stdout)
+		if errStdout != nil {
+			return "", fmt.Errorf("failed to read stdout: %w", errStdout)
+		}
+		stderrData, errStderr := io.ReadAll(stderr)
+		if errStderr != nil {
+			return "", fmt.Errorf("failed to read stderr: %w", errStderr)
+		}
+		if err = cmd.Wait(); err != nil {
+			select {
+			case <-ctx.Done():
+				return "", fmt.Errorf("%v: %w", utils.Timeout, ctx.Err())
+			default:
+				return "", fmt.Errorf("command execution failed: %w, stderr: %s", err, stderrData)
 			}
-			result := strings.TrimSpace(string(output))
-			expectedResult := strings.TrimSpace(string(expectedAnswer))
-			if result != expectedResult {
-				return fmt.Sprintf("Test case #%d failed. Expected: %s, Got: %s", i+1, expectedResult, result), nil
-			}
+		}
+		result := strings.TrimSpace(string(stdoutData))
+		expectedResult := strings.TrimSpace(string(expectedAnswer))
+		if result != expectedResult {
+			return fmt.Sprintf("Test case #%d failed. Expected: %s, Got: %s", i+1, expectedResult, result), nil
 		}
 	}
 	return utils.OK, nil

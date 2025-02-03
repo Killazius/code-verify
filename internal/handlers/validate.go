@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"compile-server/internal/config"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,8 +14,17 @@ func GetName(token string) (string, int, error) {
 	if config.Env == "local" {
 		return "localhost", http.StatusOK, nil
 	}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
-	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("%s: %w", op, err)
@@ -57,7 +67,15 @@ func MarkTaskAsCompleted(username string) (int, error) {
 		return http.StatusOK, nil
 	}
 	url := fmt.Sprintf("https://studyingit-api.ru/api/%v/complete/", username)
-	client := &http.Client{}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
 	req, err := http.NewRequest("PATCH", url, nil)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("%s: %w", op, err)

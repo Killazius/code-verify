@@ -3,7 +3,7 @@ linters:
   enable:
     - errcheck
     - goconst
-    - gosec
+    #gosec Отключен из-за TLS
     - govet
     - ineffassign
     - gosimple

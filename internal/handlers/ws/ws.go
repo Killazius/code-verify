@@ -65,14 +65,13 @@ func New(log *slog.Logger) http.HandlerFunc {
 		}
 		log.Info("request JSON decoded", slog.Any("json", user))
 		userName, status, errGet := handlers.GetName(user.Token)
-
-		if errGet != nil {
-			log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
-			return
-		}
 		err = utils.SendStatus(conn, status)
 		if err != nil {
 			log.Error("send status-json failed", slog.String(logger.Err, err.Error()))
+			return
+		}
+		if errGet != nil {
+			log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
 			return
 		}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -45,9 +46,14 @@ func New(log *slog.Logger) http.HandlerFunc {
 			return
 		}
 		defer func() {
+			err := conn.WriteControl(websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Closing connection"), time.Now().Add(time.Second))
+			if err != nil {
+				log.Error("failed to send close message", slog.String(logger.Err, err.Error()))
+			}
+
 			if err = conn.Close(); err != nil {
 				log.Error("connection close", slog.String(logger.Err, err.Error()))
-				return
 			}
 		}()
 

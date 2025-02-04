@@ -2,10 +2,12 @@ package utils
 
 import "github.com/gorilla/websocket"
 
+type StatusMessage struct {
+	Status int `json:"status"`
+}
+
 func SendStatus(conn *websocket.Conn, status int) error {
-	message := struct {
-		Status int `json:"status"`
-	}{
+	message := StatusMessage{
 		Status: status,
 	}
 	return conn.WriteJSON(message)
@@ -25,15 +27,15 @@ type CompilationResult struct {
 	Output  string
 }
 
+type StageMessage struct {
+	Stage   Stage  `json:"stage"`
+	Message string `json:"message"`
+}
+
 func SendJSON(conn *websocket.Conn, stage Stage, message interface{}) error {
-	json := struct {
-		Stage   Stage  `json:"stage"`
-		Message string `json:"message"`
-	}{
+	json := StageMessage{
 		Stage:   stage,
 		Message: message.(string),
 	}
-
 	return conn.WriteJSON(json)
-
 }

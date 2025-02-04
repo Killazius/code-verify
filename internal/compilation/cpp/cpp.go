@@ -62,7 +62,8 @@ func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.Comp
 		if errSend != nil {
 			return nil, fmt.Errorf("%s: %w", op, errSend)
 		}
-		return nil, fmt.Errorf("%s: %w", op, errCmd)
+		// TODO здесь не всегда timeout может быть. надо бы додумать и переделать
+		return &utils.CompilationResult{Success: output == utils.OK, Output: utils.Timeout}, fmt.Errorf("%s: %w", op, errCmd)
 	}
 	errSend = utils.SendJSON(conn, utils.Test, output)
 	if errSend != nil {

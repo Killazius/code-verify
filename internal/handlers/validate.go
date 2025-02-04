@@ -12,7 +12,7 @@ import (
 func GetName(token string) (string, int, error) {
 	const op = "handlers.validate.GetName"
 	if config.Env == config.Local {
-		return "localhost", http.StatusOK, nil
+		return token, http.StatusOK, nil
 	}
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,

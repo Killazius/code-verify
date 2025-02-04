@@ -28,7 +28,8 @@ jobs:
 
       - name: Test
         run: |
-          go test -v -race -coverprofile=./cover.out -covermode=atomic -coverpkg=$(go list ./... | grep -vE '(test|scripts|cmd|mock|gen|tests)' | tr '\n' ',') ./...
+          PACKAGES=$(go list ./... | grep -vE '(test|scripts|cmd|mock|gen|/tests/)')
+          go test -v -race -coverprofile=./cover.out -covermode=atomic -coverpkg=$(echo $PACKAGES | tr ' ' ',') $PACKAGES
 
       - name: Check coverage
         uses: vladopajic/go-test-coverage@v2

@@ -22,11 +22,11 @@ type testCasePy struct {
 	testErr bool
 }
 
-func TestWebSocketPY(t *testing.T) {
+func TestWsPy(t *testing.T) {
 	u := fmt.Sprintf("ws://%v/ws", host)
 	tests := []testCasePy{
 		{
-			name: "correct decision on py",
+			name: "correct decision",
 			message: ws.UserMessage{
 				Code:     "a=int(input())\nb=int(input())\nprint(a+b)",
 				Lang:     compilation.LangPy,
@@ -36,7 +36,7 @@ func TestWebSocketPY(t *testing.T) {
 			testErr: false,
 		},
 		{
-			name: "syntax error on py",
+			name: "syntax error",
 			message: ws.UserMessage{
 				Code:     "a=int(input())\nb=int(input())\nprint(ab)",
 				Lang:     compilation.LangPy,
@@ -46,7 +46,7 @@ func TestWebSocketPY(t *testing.T) {
 			testErr: true,
 		},
 		{
-			name: "incorrect decision on py",
+			name: "incorrect decision",
 			message: ws.UserMessage{
 				Code:     "a=int(input())\nb=int(input())\nprint(a)",
 				Lang:     compilation.LangPy,
@@ -56,7 +56,7 @@ func TestWebSocketPY(t *testing.T) {
 			testErr: true,
 		},
 		{
-			name: "endless loop on py",
+			name: "endless loop",
 			message: ws.UserMessage{
 				Code:     "a = int(input())\nb = int(input())\nwhile True:\n\tprint(a)",
 				Lang:     compilation.LangPy,

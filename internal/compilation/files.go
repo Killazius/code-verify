@@ -12,7 +12,7 @@ type Lang string
 const (
 	LangCpp Lang = "cpp"
 	LangPy  Lang = "py"
-	LangGO  Lang = "go"
+	LangGo  Lang = "go"
 )
 
 // MakeFile Dispatched: убрали функцию сохранения на s3. думать как сделать s3 для хранения попыток и всего прочего
@@ -41,7 +41,7 @@ func _(path string, lang Lang, userName string, taskName string) (string, error)
 
 func isValidLang(lang Lang) bool {
 	switch lang {
-	case LangCpp, LangPy, LangGO:
+	case LangCpp, LangPy, LangGo:
 		return true
 	default:
 		return false

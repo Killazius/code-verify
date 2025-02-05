@@ -12,23 +12,23 @@ import (
 	"testing"
 )
 
-type testCaseCpp struct {
+type testCaseGo struct {
 	name       string
 	message    ws.UserMessage
 	compileErr bool
 	testErr    bool
 }
 
-func TestWsCpp(t *testing.T) {
+func TestWsGo(t *testing.T) {
 	u := fmt.Sprintf("ws://%v/ws", host)
-	tests := []testCaseCpp{
+	tests := []testCaseGo{
 		{
 			name: "correct decision",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<a+b;}",
-				Lang:     compilation.LangCpp,
+				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(a + b)\n}",
+				Lang:     compilation.LangGo,
 				TaskName: "1-sum",
-				Token:    "CPP1",
+				Token:    "GO1",
 			},
 			compileErr: false,
 			testErr:    false,
@@ -36,20 +36,20 @@ func TestWsCpp(t *testing.T) {
 		{
 			name: "syntax error",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<ab;}",
-				Lang:     compilation.LangCpp,
+				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(ab)\n}",
+				Lang:     compilation.LangGo,
 				TaskName: "1-sum",
-				Token:    "CPP2",
+				Token:    "GO2",
 			},
 			compileErr: true,
 		},
 		{
 			name: "incorrect decision",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<a;}",
-				Lang:     compilation.LangCpp,
+				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(a)\n}",
+				Lang:     compilation.LangGo,
 				TaskName: "1-sum",
-				Token:    "CPP3",
+				Token:    "GO3",
 			},
 			compileErr: false,
 			testErr:    true,
@@ -57,10 +57,10 @@ func TestWsCpp(t *testing.T) {
 		{
 			name: "endless loop",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; while (true);}",
-				Lang:     compilation.LangCpp,
+				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfor {\n\t\tfmt.Println(a+b)\n\t}\n}",
+				Lang:     compilation.LangGo,
 				TaskName: "1-sum",
-				Token:    "CPP4",
+				Token:    "GO4",
 			},
 			compileErr: false,
 			testErr:    true,

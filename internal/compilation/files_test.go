@@ -24,6 +24,10 @@ func TestIsValidLang(t *testing.T) {
 				expected: true,
 			},
 			{
+				input:    LangGo,
+				expected: true,
+			},
+			{
 				input:    "",
 				expected: false,
 			},

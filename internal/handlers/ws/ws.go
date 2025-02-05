@@ -122,7 +122,7 @@ func handleLanguage(conn *websocket.Conn, userFile string, lang compilation.Lang
 		return cpp.CompileAndRun(conn, userFile, taskName)
 	case compilation.LangPy:
 		return py.Run(conn, userFile, taskName)
-	case compilation.LangGO:
+	case compilation.LangGo:
 		return golang.CompileAndRun(conn, userFile, taskName)
 	default:
 		err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", lang)))

@@ -10,30 +10,26 @@ import (
 	"strings"
 )
 
-func Compile(userFile string) (string, error) {
+func compile(userFile string) (string, error) {
 	userFileExe := strings.Replace(userFile, ".cpp", ".exe", 1)
 	cmd := exec.Command("g++", "-o", userFileExe, userFile)
-
-	output, errCmd := cmd.CombinedOutput()
-	if errCmd != nil {
-		removeErr := os.Remove(userFile)
-		if removeErr != nil {
-			return "", removeErr
+	defer func() {
+		err := os.Remove(userFile)
+		if err != nil {
+			return
 		}
+	}()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
 		return "", fmt.Errorf("%s", output)
 	}
-	err := os.Remove(userFile)
-	if err != nil {
-		return "", err
-	}
 	return userFileExe, nil
-
 }
 
 func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.CompilationResult, error) {
 	const op = "compilation.cpp.Run"
 
-	userFileExe, err := Compile(userFile)
+	userFileExe, err := compile(userFile)
 	defer func() {
 		err := os.Remove(userFileExe)
 		if err != nil {

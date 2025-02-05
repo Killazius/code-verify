@@ -3,6 +3,7 @@ package ws
 import (
 	"compile-server/internal/compilation"
 	"compile-server/internal/compilation/cpp"
+	"compile-server/internal/compilation/golang"
 	"compile-server/internal/compilation/py"
 	"compile-server/internal/handlers"
 	"compile-server/internal/handlers/ws/utils"
@@ -121,6 +122,8 @@ func handleLanguage(conn *websocket.Conn, userFile string, lang compilation.Lang
 		return cpp.CompileAndRun(conn, userFile, taskName)
 	case compilation.LangPy:
 		return py.Run(conn, userFile, taskName)
+	case compilation.LangGO:
+		return golang.CompileAndRun(conn, userFile, taskName)
 	default:
 		err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Unsupported language: %s", lang)))
 		if err != nil {

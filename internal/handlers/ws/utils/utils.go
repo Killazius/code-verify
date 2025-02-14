@@ -10,6 +10,7 @@ func SendStatus(conn *websocket.Conn, status int) error {
 	message := StatusMessage{
 		Status: status,
 	}
+
 	return conn.WriteJSON(message)
 }
 

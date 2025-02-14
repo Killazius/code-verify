@@ -25,17 +25,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type UserMessage struct {
-	Code     string           `json:"code"`
-	Lang     compilation.Lang `json:"lang"`
-	TaskName string           `json:"task_name"`
-	Token    string           `json:"token"`
-}
-
 func New(log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.ws.New"
-		log = log.With(
+		log := log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
@@ -73,16 +66,16 @@ func New(log *slog.Logger) http.HandlerFunc {
 		log.Info("request JSON decoded",
 			slog.String("code", user.Code),
 			slog.String("lang", string(user.Lang)),
-			slog.String("task_name", user.TaskName),
+			slog.String("task_id", user.TaskID),
 		)
-		userName, status, errGet := handlers.GetName(user.Token)
+		userID, status, errGet := handlers.GetID(user.Token)
 		err = utils.SendStatus(conn, status)
 		if err != nil {
 			log.Error("send status-json failed", slog.String(logger.Err, err.Error()))
 			return
 		}
 		if errGet != nil {
-			log.Error("get name failed", slog.String(logger.Err, errGet.Error()))
+			log.Error("get userID failed", slog.String(logger.Err, errGet.Error()))
 			return
 		}
 
@@ -90,27 +83,27 @@ func New(log *slog.Logger) http.HandlerFunc {
 			log.Error("token-status != 200", slog.Int("token-status", status), slog.String(logger.Err, err.Error()))
 			return
 		}
-		log.Info("token verified", slog.String("username", userName))
+		log.Info("token verified", slog.String("userID", userID))
 
-		userFile := fmt.Sprintf("%v-%v.%v", user.TaskName, userName, user.Lang)
+		userFile := fmt.Sprintf("%v-%v.%v", user.TaskID, userID, user.Lang)
 		err = compilation.CreateFile(userFile, user.Code, user.Lang)
 		if err != nil {
 			log.Error("create file failed", slog.String(logger.Err, err.Error()))
 		}
 
-		result, err := handleLanguage(conn, userFile, user.Lang, user.TaskName)
+		result, err := handleLanguage(conn, userFile, user.Lang, user.TaskID)
 		if err != nil {
 			log.Error("handle language failed", slog.String(logger.Err, err.Error()))
 		}
 		log.Info("result is received", slog.Any("result", result))
 
 		if result != nil && result.Success {
-			status, err = handlers.MarkTaskAsCompleted(userName)
+			status, err = handlers.MarkTaskAsCompleted(userID, user.TaskID)
 			if err != nil || status != http.StatusOK {
 				log.Info("mark task failed", slog.Int("token-status", status), slog.String(logger.Err, err.Error()))
 				return
 			}
-			log.Info("task marked", slog.String("task", user.TaskName), slog.String("username", userName))
+			log.Info("task marked", slog.String("task", user.TaskID), slog.String("username", userID))
 		}
 
 	}

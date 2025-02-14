@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"compile-server/internal/config"
 	"crypto/tls"
 	"encoding/json"
@@ -9,20 +10,22 @@ import (
 	"net/http"
 )
 
-func GetName(token string) (string, int, error) {
-	const op = "handlers.validate.GetName"
-	if config.Env == config.Local {
-		return token, http.StatusOK, nil
-	}
+func newClient() *http.Client {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-
-	client := &http.Client{
+	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},
 	}
+}
+func GetID(token string) (string, int, error) {
+	const op = "handlers.validate.GetID"
+	if config.Env == config.Local {
+		return token, http.StatusOK, nil
+	}
+	client := newClient()
 
 	url := fmt.Sprintf("https://studyingit-api.ru/api/code/auth/%s/", token)
 	req, err := http.NewRequest("GET", url, nil)
@@ -61,22 +64,26 @@ func GetName(token string) (string, int, error) {
 	return response.Username, http.StatusOK, nil
 }
 
-func MarkTaskAsCompleted(username string) (int, error) {
+type reqBody struct {
+	UserID string `json:"user_id"`
+	TaskID string `json:"task_id"`
+}
+
+func MarkTaskAsCompleted(userID, taskID string) (int, error) {
 	const op = "handlers.validate.MarkTaskAsCompleted"
 	if config.Env == config.Local {
 		return http.StatusOK, nil
 	}
-	url := fmt.Sprintf("https://studyingit-api.ru/api/%v/complete/", username)
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
+	url := "https://studyingit-api.ru/api/complete/"
+
+	client := newClient()
+
+	body, err := json.Marshal(reqBody{UserID: userID, TaskID: taskID})
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("%s: %w", op, err)
 	}
 
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: tlsConfig,
-		},
-	}
-	req, err := http.NewRequest("PATCH", url, nil)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("%s: %w", op, err)
 	}

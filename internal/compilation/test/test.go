@@ -20,8 +20,10 @@ type testCase struct {
 type testCases []testCase
 
 func readTestCases(path string) (testCases, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, fmt.Errorf("task_id is incorrect")
+	}
 	var tests testCases
-
 	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)
@@ -57,6 +59,9 @@ func Run(command, taskName string, args ...string) (string, error) {
 	tests, errTests := readTestCases(path)
 	if errTests != nil {
 		return "", errTests
+	}
+	if tests == nil {
+		return "", fmt.Errorf("no test cases")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

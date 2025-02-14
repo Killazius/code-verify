@@ -17,7 +17,7 @@ const (
 
 // MakeFile Dispatched: убрали функцию сохранения на s3. думать как сделать s3 для хранения попыток и всего прочего
 func _(path string, lang Lang, userName string, taskName string) (string, error) {
-	if !isValidLang(lang) {
+	if !IsValidLang(lang) {
 		return "", fmt.Errorf("unsupported language")
 	}
 	err := godotenv.Load()
@@ -39,7 +39,7 @@ func _(path string, lang Lang, userName string, taskName string) (string, error)
 	return userFile, nil
 }
 
-func isValidLang(lang Lang) bool {
+func IsValidLang(lang Lang) bool {
 	switch lang {
 	case LangCpp, LangPy, LangGo:
 		return true
@@ -49,7 +49,7 @@ func isValidLang(lang Lang) bool {
 }
 
 func CreateFile(filePath string, code string, lang Lang) error {
-	if !isValidLang(lang) {
+	if !IsValidLang(lang) {
 		return fmt.Errorf("unsupported language")
 	}
 	file, err := os.Create(filePath)

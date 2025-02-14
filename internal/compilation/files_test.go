@@ -38,14 +38,14 @@ func TestIsValidLang(t *testing.T) {
 		}
 		t.Parallel()
 		for _, tc := range testCases {
-			assert.Equal(t, tc.expected, isValidLang(tc.input))
+			assert.Equal(t, tc.expected, IsValidLang(tc.input))
 		}
 	})
 
 	t.Run("func is idempotent", func(t *testing.T) {
 		t.Parallel()
 		for i := 0; i < 100; i++ {
-			assert.True(t, isValidLang(LangCpp))
+			assert.True(t, IsValidLang(LangCpp))
 		}
 	})
 }

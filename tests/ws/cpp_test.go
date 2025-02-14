@@ -25,10 +25,10 @@ func TestWsCpp(t *testing.T) {
 		{
 			name: "correct decision",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<a+b;}",
-				Lang:     compilation.LangCpp,
-				TaskName: "1-sum",
-				Token:    "CPP1",
+				Code:   "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<a+b;}",
+				Lang:   compilation.LangCpp,
+				TaskID: "1",
+				Token:  "CPP1",
 			},
 			compileErr: false,
 			testErr:    false,
@@ -36,20 +36,20 @@ func TestWsCpp(t *testing.T) {
 		{
 			name: "syntax error",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<ab;}",
-				Lang:     compilation.LangCpp,
-				TaskName: "1-sum",
-				Token:    "CPP2",
+				Code:   "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<ab;}",
+				Lang:   compilation.LangCpp,
+				TaskID: "1",
+				Token:  "CPP2",
 			},
 			compileErr: true,
 		},
 		{
 			name: "incorrect decision",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<a;}",
-				Lang:     compilation.LangCpp,
-				TaskName: "1-sum",
-				Token:    "CPP3",
+				Code:   "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; std::cout<<a;}",
+				Lang:   compilation.LangCpp,
+				TaskID: "1",
+				Token:  "CPP3",
 			},
 			compileErr: false,
 			testErr:    true,
@@ -57,10 +57,10 @@ func TestWsCpp(t *testing.T) {
 		{
 			name: "endless loop",
 			message: ws.UserMessage{
-				Code:     "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; while (true);}",
-				Lang:     compilation.LangCpp,
-				TaskName: "1-sum",
-				Token:    "CPP4",
+				Code:   "#include <iostream>\nint main() {int a,b; std::cin>>a>>b; while (true);}",
+				Lang:   compilation.LangCpp,
+				TaskID: "1",
+				Token:  "CPP4",
 			},
 			compileErr: false,
 			testErr:    true,

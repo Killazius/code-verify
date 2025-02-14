@@ -25,10 +25,10 @@ func TestWsGo(t *testing.T) {
 		{
 			name: "correct decision",
 			message: ws.UserMessage{
-				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(a + b)\n}",
-				Lang:     compilation.LangGo,
-				TaskName: "1-sum",
-				Token:    "GO1",
+				Code:   "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(a + b)\n}",
+				Lang:   compilation.LangGo,
+				TaskID: "1",
+				Token:  "GO1",
 			},
 			compileErr: false,
 			testErr:    false,
@@ -36,20 +36,20 @@ func TestWsGo(t *testing.T) {
 		{
 			name: "syntax error",
 			message: ws.UserMessage{
-				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(ab)\n}",
-				Lang:     compilation.LangGo,
-				TaskName: "1-sum",
-				Token:    "GO2",
+				Code:   "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(ab)\n}",
+				Lang:   compilation.LangGo,
+				TaskID: "1",
+				Token:  "GO2",
 			},
 			compileErr: true,
 		},
 		{
 			name: "incorrect decision",
 			message: ws.UserMessage{
-				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(a)\n}",
-				Lang:     compilation.LangGo,
-				TaskName: "1-sum",
-				Token:    "GO3",
+				Code:   "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfmt.Println(a)\n}",
+				Lang:   compilation.LangGo,
+				TaskID: "1",
+				Token:  "GO3",
 			},
 			compileErr: false,
 			testErr:    true,
@@ -57,10 +57,10 @@ func TestWsGo(t *testing.T) {
 		{
 			name: "endless loop",
 			message: ws.UserMessage{
-				Code:     "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfor {\n\t\tfmt.Println(a+b)\n\t}\n}",
-				Lang:     compilation.LangGo,
-				TaskName: "1-sum",
-				Token:    "GO4",
+				Code:   "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Scanln(&a)\n\tfmt.Scanln(&b)\n\tfor {\n\t\tfmt.Println(a+b)\n\t}\n}",
+				Lang:   compilation.LangGo,
+				TaskID: "1",
+				Token:  "GO4",
 			},
 			compileErr: false,
 			testErr:    true,

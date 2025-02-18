@@ -22,7 +22,7 @@ func newClient() *http.Client {
 }
 func GetID(token string) (string, int, error) {
 	const op = "handlers.validate.GetID"
-	if config.Env == config.Local {
+	if config.Env == config.Local || config.Env == config.Test {
 		return token, http.StatusOK, nil
 	}
 	client := newClient()
@@ -71,7 +71,7 @@ type reqBody struct {
 
 func MarkTaskAsCompleted(userID, taskID string) (int, error) {
 	const op = "handlers.validate.MarkTaskAsCompleted"
-	if config.Env == config.Local {
+	if config.Env == config.Local || config.Env == config.Test {
 		return http.StatusOK, nil
 	}
 	url := "https://studyingit-api.ru/api/complete/"

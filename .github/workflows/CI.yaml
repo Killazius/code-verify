@@ -45,7 +45,7 @@ jobs:
         run: |
           go run cmd/web-server/main.go &
         env:
-          CONFIG_PATH: "config/prod.yaml"
+          CONFIG_PATH: "config/test.yaml"
 
       - name: integration-tests
         run: |

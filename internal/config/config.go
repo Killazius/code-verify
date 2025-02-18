@@ -15,6 +15,7 @@ var (
 const (
 	Local = "local"
 	Prod  = "prod"
+	Test  = "test"
 )
 
 type Config struct {

@@ -21,6 +21,11 @@ jobs:
         run: |
           go mod download
 
+      - name: Install Python and pip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip
+
       - name: Lint
         uses: golangci/golangci-lint-action@v4
         with:
@@ -28,7 +33,7 @@ jobs:
 
       - name: Unit-tests
         run: |
-          go test -v -race -parallel 10 -shuffle=on -coverprofile=./cover.out -covermode=atomic ./...
+          go test -v -race -parallel 5 -shuffle=on -coverprofile=./cover.out -covermode=atomic ./...
   
 
       - name: Check coverage
@@ -40,8 +45,8 @@ jobs:
         run: |
           go run cmd/web-server/main.go &
         env:
-          CONFIG_PATH: "config/local.yaml"
+          CONFIG_PATH: "config/prod.yaml"
 
       - name: integration-tests
         run: |
-          go test -v -race -tags=integration -parallel 10 -shuffle=on -coverprofile=./cover-integration.out -covermode=atomic ./...
+          go test -v -race -tags=integration -coverprofile=./cover-integration.out -covermode=atomic ./...

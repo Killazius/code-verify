@@ -54,14 +54,14 @@ func GetID(token string) (string, int, error) {
 	}
 
 	var response struct {
-		Username string `json:"username"`
+		UserID string `json:"user_id"`
 	}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return response.Username, http.StatusOK, nil
+	return response.UserID, http.StatusOK, nil
 }
 
 type reqBody struct {

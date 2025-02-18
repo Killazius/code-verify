@@ -28,7 +28,7 @@ var upgrader = websocket.Upgrader{
 func New(log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.ws.New"
-		log := log.With(
+		log = log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
@@ -40,7 +40,11 @@ func New(log *slog.Logger) http.HandlerFunc {
 			return
 		}
 		defer func() {
-			err := conn.WriteControl(websocket.CloseMessage,
+			err := r.Body.Close()
+			if err != nil {
+				return
+			}
+			err = conn.WriteControl(websocket.CloseMessage,
 				websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Closing connection"), time.Now().Add(time.Second))
 			if err != nil {
 				log.Error("failed to send close message", slog.String(logger.Err, err.Error()))
@@ -66,7 +70,7 @@ func New(log *slog.Logger) http.HandlerFunc {
 		log.Info("request JSON decoded",
 			slog.String("code", user.Code),
 			slog.String("lang", string(user.Lang)),
-			slog.String("task_id", user.TaskID),
+			slog.String("taskID", user.TaskID),
 		)
 		userID, status, errGet := handlers.GetID(user.Token)
 		err = utils.SendStatus(conn, status)

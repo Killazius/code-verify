@@ -16,7 +16,12 @@ func compile(userFile string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get absolute path: %w", err)
 	}
-
+	defer func() {
+		err := os.Remove(userFile)
+		if err != nil {
+			return
+		}
+	}()
 	userFileExe := strings.Replace(absUserFile, ".go", ".exe", 1)
 
 	cmd := exec.Command("go", "build", "-o", userFileExe, absUserFile)
@@ -56,7 +61,7 @@ func CompileAndRun(conn *websocket.Conn, userFile, taskName string) (*utils.Comp
 		return nil, fmt.Errorf("%s: %w", op, errSend)
 	}
 
-	command := fmt.Sprintf("./%v", userFileExe)
+	command := userFileExe
 	output, errCmd := test.Run(command, taskName)
 
 	if errCmd != nil {

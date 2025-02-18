@@ -38,7 +38,7 @@ jobs:
 
       - name: Start app
         run: |
-          go run main.go &
+          go run cmd/web-server/main.go &
         env:
           CONFIG_PATH: "config/local.yaml"
 

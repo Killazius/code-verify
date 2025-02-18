@@ -26,12 +26,22 @@ jobs:
         with:
           version: latest
 
-      - name: Test
+      - name: Unit-tests
         run: |
-          PACKAGES=$(go list ./... | grep -vE '(test|scripts|cmd|mock|gen|/tests/)')
-          go test -v -race -coverprofile=./cover.out -covermode=atomic -coverpkg=$(echo $PACKAGES | tr ' ' ',') $PACKAGES
+          go test -v -race -parallel 10 -shuffle=on -coverprofile=./cover.out -covermode=atomic ./...
+  
 
       - name: Check coverage
         uses: vladopajic/go-test-coverage@v2
         with:
           profile: cover.out
+
+      - name: Start app
+        run: |
+          go run main.go &
+        env:
+          CONFIG_PATH: "config/local.yaml"
+
+      - name: integration-tests
+        run: |
+          go test -v -race -tags=integration -parallel 10 -shuffle=on -coverprofile=./cover-integration.out -covermode=atomic ./...
